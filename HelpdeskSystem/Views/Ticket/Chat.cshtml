@@ -1,0 +1,454 @@
+@model HelpdeskSystem.Models.ViewModels.TicketDetailVM
+@using HelpdeskSystem.Models
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Trao đổi sự cố #" + Model.TicketCode;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string currentUserId = User.Identity.GetUserId();
+    string currentUserName = User.Identity.Name;
+    bool isStaff = User.IsInRole("Admin") || User.IsInRole("Technician");
+}
+
+@section Styles {
+    <style>
+        .chat-app-wrapper {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .chat-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+        .chat-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 14px 20px;
+        }
+        .chat-body {
+            background-color: #f1f5f9;
+            height: calc(100vh - 300px);
+            min-height: 480px;
+            max-height: 650px;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+        .chat-footer {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 12px 20px;
+        }
+        
+        /* Incoming message (Left) */
+        .msg-incoming {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .msg-incoming .msg-bubble {
+            background: #ffffff;
+            color: #1e293b;
+            border-radius: 18px 18px 18px 4px;
+            padding: 10px 16px;
+            max-width: 72%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            word-break: break-word;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .msg-incoming .msg-time {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Outgoing message (Right - Me) */
+        .msg-outgoing {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+        .msg-outgoing .msg-bubble {
+            background: #0284c7;
+            color: #ffffff;
+            border-radius: 18px 18px 4px 18px;
+            padding: 10px 16px;
+            max-width: 72%;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+            word-break: break-word;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .msg-outgoing .msg-time {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Internal Note */
+        .msg-internal {
+            background: #fffbeb !important;
+            border: 1px dashed #f59e0b !important;
+            color: #78350f !important;
+        }
+
+        /* Attachment pills */
+        .chat-attachment-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .msg-outgoing .chat-attachment-pill {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .msg-outgoing .chat-attachment-pill:hover {
+            background: rgba(255, 255, 255, 0.35);
+            color: #ffffff;
+        }
+        .msg-incoming .chat-attachment-pill {
+            background: #f8fafc;
+            color: #0284c7;
+            border: 1px solid #e2e8f0;
+        }
+        .msg-incoming .chat-attachment-pill:hover {
+            background: #e2e8f0;
+            color: #0369a1;
+        }
+
+        /* Input styling */
+        .chat-input {
+            border-radius: 24px;
+            padding: 10px 18px;
+            background-color: #f1f5f9;
+            border: 1px solid transparent;
+            font-size: 0.92rem;
+            transition: all 0.2s;
+        }
+        .chat-input:focus {
+            background-color: #ffffff;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+        .btn-send {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background-color: #0284c7;
+            border-color: #0284c7;
+            color: #ffffff;
+            transition: transform 0.15s, background-color 0.2s;
+        }
+        .btn-send:hover {
+            background-color: #0369a1;
+            transform: scale(1.05);
+            color: #ffffff;
+        }
+    </style>
+}
+
+<div class="container-fluid py-2">
+    <div class="chat-app-wrapper">
+        <div class="card chat-card">
+            
+            <!-- Chat Header -->
+            <div class="chat-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="@Url.Action("Details", "Ticket", new { id = Model.TicketId })" 
+                       class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                       style="width: 36px; height: 36px;" 
+                       title="Quay lại chi tiết phiếu">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    
+                    <div class="rounded-circle bg-primary-soft text-primary d-flex align-items-center justify-content-center fw-bold" 
+                         style="width: 44px; height: 44px; font-size: 1.1rem;">
+                        <i class="fas fa-headset"></i>
+                    </div>
+
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold text-dark font-monospace" style="font-size: 0.95rem;">@Model.TicketCode</span>
+                            <span class="badge" style="background-color: @Model.StatusColor; color: white; font-size: 0.75rem;">
+                                @Model.StatusDisplay
+                            </span>
+                            <span class="badge" style="background-color: @Model.PriorityColor; color: white; font-size: 0.75rem;">
+                                @Model.PriorityName
+                            </span>
+                        </div>
+                        <div class="text-truncate text-muted small mt-1" style="max-width: 480px;">
+                            <strong>@Model.Title</strong> &bull; 
+                            Người gửi: <span>@Model.CreatedByName</span>
+                            @if (!string.IsNullOrEmpty(Model.AssignedToName))
+                            {
+                                <span> &bull; KTV: <strong class="text-primary">@Model.AssignedToName</strong></span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <a href="@Url.Action("Details", "Ticket", new { id = Model.TicketId })" class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                        <i class="fas fa-file-lines me-1"></i> Chi tiết phiếu
+                    </a>
+                    <a href="@Url.Action("Index", "Ticket")" class="btn btn-sm btn-light border px-3 rounded-pill text-muted">
+                        <i class="fas fa-list me-1"></i> Danh sách
+                    </a>
+                </div>
+            </div>
+
+            <!-- Chat Body (Messages Thread) -->
+            <div class="chat-body" id="chatMessages">
+                <!-- System Welcome Pill -->
+                <div class="text-center my-3">
+                    <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-normal" style="font-size: 0.78rem;">
+                        <i class="fas fa-shield-alt text-success me-1"></i> Phòng trao đổi trực tiếp cho phiếu <strong>@Model.TicketCode</strong>
+                    </span>
+                </div>
+
+                <!-- Initial Ticket Issue Description as Context -->
+                <div class="msg-incoming mb-4">
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" 
+                         style="width: 34px; height: 34px; font-size: 0.85rem;">
+                        @(string.IsNullOrEmpty(Model.CreatedByName) ? "U" : Model.CreatedByName.Substring(0, 1).ToUpper())
+                    </div>
+                    <div>
+                        <div class="small text-muted mb-1">
+                            <span class="fw-bold text-dark">@Model.CreatedByName</span>
+                            <span class="badge bg-light text-secondary border ms-1">Người yêu cầu</span>
+                            <span class="ms-1">&bull; Yêu cầu ban đầu</span>
+                        </div>
+                        <div class="msg-bubble">
+                            <div class="fw-semibold text-primary mb-1">@Model.Title</div>
+                            <div style="white-space: pre-wrap;">@Model.Description</div>
+
+                            @if (Model.Attachments != null && Model.Attachments.Any())
+                            {
+                                <div class="mt-2 pt-2 border-top border-light">
+                                    <div class="small text-muted mb-1"><i class="fas fa-paperclip me-1"></i>Tệp đính kèm khi tạo phiếu:</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var att in Model.Attachments)
+                                        {
+                                            <a href="@Url.Action("Download", "Comment", new { id = att.AttachmentId })" class="chat-attachment-pill" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                                <span>@att.FileName</span>
+                                                <span class="opacity-75">(@att.FileSize)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="msg-time">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                </div>
+
+                <!-- Comments / Messages Stream -->
+                @if (Model.Comments != null && Model.Comments.Any())
+                {
+                    foreach (var c in Model.Comments)
+                    {
+                        bool isMe = (!string.IsNullOrEmpty(c.UserId) && c.UserId == currentUserId) || 
+                                    (!string.IsNullOrEmpty(c.UserName) && (c.UserName == currentUserName || c.UserName == User.Identity.Name));
+
+                        if (isMe)
+                        {
+                            <!-- Outgoing Message (Me) -->
+                            <div class="msg-outgoing">
+                                <div class="msg-bubble @(c.IsInternalNote ? "msg-internal" : "")">
+                                    @if (c.IsInternalNote)
+                                    {
+                                        <div class="small fw-bold text-warning mb-1">
+                                            <i class="fas fa-lock me-1"></i> Ghi chú nội bộ (Chỉ nhân viên thấy)
+                                        </div>
+                                    }
+                                    <div>@Html.Raw(c.Content.Replace("\n", "<br/>"))</div>
+
+                                    @if (c.Attachments != null && c.Attachments.Any())
+                                    {
+                                        <div class="mt-2 pt-1 border-top border-white border-opacity-25">
+                                            @foreach (var att in c.Attachments)
+                                            {
+                                                <a href="@Url.Action("Download", "Comment", new { id = att.AttachmentId })" class="chat-attachment-pill" target="_blank">
+                                                    <i class="fas fa-download"></i>
+                                                    <span>@att.FileName</span>
+                                                    <span class="opacity-75">(@att.FileSize)</span>
+                                                </a>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div class="msg-time">
+                                    <span>@c.CreatedDate.ToString("HH:mm, dd/MM")</span>
+                                    <i class="fas fa-check text-primary ms-1 small"></i>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Incoming Message (Other) -->
+                            <div class="msg-incoming">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" 
+                                     style="width: 34px; height: 34px; font-size: 0.85rem;">
+                                    @(string.IsNullOrEmpty(c.UserName) ? "U" : c.UserName.Substring(0, 1).ToUpper())
+                                </div>
+                                <div>
+                                    <div class="small text-muted mb-1">
+                                        <span class="fw-bold text-dark">@c.UserName</span>
+                                        <span class="badge bg-light text-secondary border ms-1">@c.UserRole</span>
+                                    </div>
+                                    <div class="msg-bubble @(c.IsInternalNote ? "msg-internal" : "")">
+                                        @if (c.IsInternalNote)
+                                        {
+                                            <div class="small fw-bold text-warning mb-1">
+                                                <i class="fas fa-lock me-1"></i> Ghi chú nội bộ
+                                            </div>
+                                        }
+                                        <div>@Html.Raw(c.Content.Replace("\n", "<br/>"))</div>
+
+                                        @if (c.Attachments != null && c.Attachments.Any())
+                                        {
+                                            <div class="mt-2 pt-1 border-top border-light">
+                                                @foreach (var att in c.Attachments)
+                                                {
+                                                    <a href="@Url.Action("Download", "Comment", new { id = att.AttachmentId })" class="chat-attachment-pill" target="_blank">
+                                                        <i class="fas fa-download"></i>
+                                                        <span>@att.FileName</span>
+                                                        <span class="opacity-75">(@att.FileSize)</span>
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="msg-time">@c.CreatedDate.ToString("HH:mm, dd/MM")</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            </div>
+
+            <!-- Chat Footer (Input Bar - Zalo/Messenger Style) -->
+            <div class="chat-footer">
+                @if (Model.CanComment)
+                {
+                    <!-- Selected file pill preview -->
+                    <div id="filePreviewBar" class="d-none mb-2 p-2 bg-light rounded-3 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2 small text-dark">
+                            <i class="fas fa-paperclip text-primary"></i>
+                            <span id="filePreviewName" class="fw-semibold"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" id="btnClearFile" title="Bỏ chọn tệp">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+
+                    <form action="@Url.Action("Add", "Comment")" method="post" id="chatForm" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ticketId" value="@Model.TicketId" />
+                        <input type="hidden" name="returnUrl" value="@Request.RawUrl" />
+                        <input type="file" id="chatFileInput" name="attachments" multiple class="d-none" />
+
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- Attach button -->
+                            <button type="button" class="btn btn-light text-secondary rounded-circle border d-flex align-items-center justify-content-center" 
+                                    id="btnAttach" style="width: 40px; height: 40px; flex-shrink: 0;" title="Đính kèm tệp / ảnh">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+
+                            <!-- Staff Internal note checkbox -->
+                            @if (isStaff)
+                            {
+                                <div class="form-check form-check-inline mb-0 me-1 d-flex align-items-center gap-1" title="Chỉ Kỹ thuật viên & Admin thấy tin nhắn này">
+                                    <input class="form-check-input mt-0" type="checkbox" id="isInternalNote" name="isInternalNote" value="true">
+                                    <label class="form-check-label text-warning fw-bold small text-nowrap" for="isInternalNote">
+                                        <i class="fas fa-lock"></i>
+                                    </label>
+                                </div>
+                            }
+
+                            <!-- Text Input -->
+                            <input type="text" 
+                                   id="chatContent" 
+                                   name="content" 
+                                   class="form-control chat-input" 
+                                   placeholder="Nhập nội dung trao đổi... (nhấn Enter để gửi)" 
+                                   autocomplete="off" 
+                                   required />
+
+                            <!-- Send Button -->
+                            <button type="submit" class="btn btn-send shadow-sm" id="btnSend" title="Gửi tin nhắn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-center py-2 text-muted small">
+                        <i class="fas fa-lock me-1"></i> Phiếu này hiện đã đóng hoặc bạn không có quyền gửi tin nhắn.
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            var $chatBox = $('#chatMessages');
+            
+            // Auto scroll to bottom
+            function scrollToBottom() {
+                $chatBox.scrollTop($chatBox[0].scrollHeight);
+            }
+            scrollToBottom();
+
+            // Attachment trigger
+            $('#btnAttach').click(function() {
+                $('#chatFileInput').click();
+            });
+
+            $('#chatFileInput').change(function() {
+                if (this.files && this.files.length > 0) {
+                    var names = [];
+                    for (var i = 0; i < this.files.length; i++) {
+                        names.push(this.files[i].name);
+                    }
+                    $('#filePreviewName').text(names.join(", "));
+                    $('#filePreviewBar').removeClass('d-none');
+                } else {
+                    $('#filePreviewBar').addClass('d-none');
+                }
+            });
+
+            $('#btnClearFile').click(function() {
+                $('#chatFileInput').val('');
+                $('#filePreviewBar').addClass('d-none');
+            });
+
+            // Focus on text input
+            $('#chatContent').focus();
+        });
+    </script>
+}

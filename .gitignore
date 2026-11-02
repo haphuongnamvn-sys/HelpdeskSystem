@@ -1,0 +1,22 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+packages/
+*.user
+*.suo
+TestResults/
+
+# Local database
+*.mdf
+*.ldf
+
+# Uploaded files
+HelpdeskSystem/Uploads/
+
+# Local/session files
+cookies.txt
+
+# Temporary files
+nuget.exe
+report_error.html

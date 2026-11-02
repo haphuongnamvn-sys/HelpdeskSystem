@@ -1,0 +1,378 @@
+@model HelpdeskSystem.Models.ViewModels.DashboardViewModel
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Bảng điều khiển (Dashboard)";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string userName = User.Identity.GetUserName();
+}
+
+@section Styles {
+    <style>
+        #recentTicketsTable thead th {
+            text-align: center !important;
+            white-space: nowrap !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            color: #475569 !important;
+            background-color: #f8fafc !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            padding: 12px 14px !important;
+        }
+        #recentTicketsTable tbody td {
+            white-space: normal !important;
+            word-break: break-word !important;
+            vertical-align: middle !important;
+            padding: 12px 14px !important;
+        }
+        #recentTicketsTable tbody tr:hover {
+            background-color: #f8faff !important;
+        }
+    </style>
+}
+
+<!-- Welcome Banner -->
+<div class="page-hero shadow-sm">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="d-flex align-items-center gap-2">
+                <span>Xin chào, @userName!</span> 👋
+            </h1>
+            <p>Chào mừng bạn đến với trung tâm điều hành Helpdesk Pro. Dưới đây là tình hình tiếp nhận và xử lý sự cố kỹ thuật hôm nay.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="@Url.Action("Index", "Ticket")" class="btn btn-light fw-bold px-3 py-2 shadow-sm text-primary">
+                <i class="fas fa-ticket-alt me-1"></i> Xem danh sách phiếu
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Info Stat Boxes -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card bg-primary h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-bold opacity-75 d-block mb-1">Tổng số phiếu</span>
+                    <h2 class="display-6 fw-bold mb-0">@Model.TotalTickets</h2>
+                </div>
+                <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                    <i class="fas fa-layer-group fa-2x"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center">
+                <a class="small text-white text-decoration-none fw-semibold" href="@Url.Action("Index", "Ticket")">
+                    Xem toàn bộ phiếu <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card bg-warning h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-bold opacity-75 d-block mb-1">Đang xử lý</span>
+                    <h2 class="display-6 fw-bold mb-0">@Model.OpenTickets</h2>
+                </div>
+                <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center">
+                <a class="small text-white text-decoration-none fw-semibold" href="@Url.Action("Index", "Ticket")">
+                    Kiểm tra tiến độ <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card bg-success h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-bold opacity-75 d-block mb-1">Đã giải quyết</span>
+                    <h2 class="display-6 fw-bold mb-0">@Model.ResolvedToday</h2>
+                </div>
+                <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center">
+                <a class="small text-white text-decoration-none fw-semibold" href="@Url.Action("Index", "Ticket")">
+                    Xem phiếu hoàn thành <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card bg-danger h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-uppercase small fw-bold opacity-75 d-block mb-1">Quá hạn SLA</span>
+                    <h2 class="display-6 fw-bold mb-0">@Model.OverdueTickets</h2>
+                </div>
+                <div class="p-3 bg-white bg-opacity-25 rounded-circle">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center">
+                <a class="small text-white text-decoration-none fw-semibold" href="@Url.Action("Index", "Ticket")">
+                    Cần can thiệp gấp <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart: Tickets by Status -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-primary me-2"><i class="fas fa-chart-pie"></i></span>
+                    <h6 class="m-0 fw-bold text-dark">Tỷ lệ phiếu theo Trạng thái</h6>
+                </div>
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center p-4">
+                <div style="max-height: 280px; width: 100%;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chart: Tickets by Category -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-success me-2"><i class="fas fa-chart-bar"></i></span>
+                    <h6 class="m-0 fw-bold text-dark">Số lượng phiếu theo Danh mục sự cố</h6>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div style="max-height: 280px; width: 100%;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tickets -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <span class="badge bg-primary-soft text-primary me-2"><i class="fas fa-history"></i></span>
+            <h6 class="m-0 fw-bold text-dark">Các phiếu yêu cầu mới nhất</h6>
+        </div>
+        <a href="@Url.Action("Index", "Ticket")" class="btn btn-sm btn-outline-primary">
+            Xem tất cả phiếu <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="recentTicketsTable">
+                <thead>
+                    <tr>
+                        <th class="text-center text-nowrap" style="width: 22%;">PHIẾU YÊU CẦU</th>
+                        <th class="text-center text-nowrap" style="width: 17%;">TRẠNG THÁI &amp; ƯU TIÊN</th>
+                        <th class="text-center text-nowrap" style="width: 27%;">KỸ THUẬT VIÊN</th>
+                        <th class="text-center text-nowrap" style="width: 20%;">THỜI GIAN &amp; SLA</th>
+                        <th class="text-center text-nowrap" style="width: 14%;">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RecentTickets != null && Model.RecentTickets.Any())
+                    {
+                        foreach (var item in Model.RecentTickets)
+                        {
+                            string sBg = "bg-secondary text-white";
+                            if (item.StatusColor == "info") { sBg = "bg-info text-dark"; }
+                            else if (item.StatusColor == "primary") { sBg = "bg-primary text-white"; }
+                            else if (item.StatusColor == "warning") { sBg = "bg-warning text-dark"; }
+                            else if (item.StatusColor == "success") { sBg = "bg-success text-white"; }
+                            else if (item.StatusColor == "danger") { sBg = "bg-danger text-white"; }
+                            else if (item.StatusColor == "dark") { sBg = "bg-dark text-white"; }
+
+                            string priorityHex = !string.IsNullOrEmpty(item.PriorityColor) ? item.PriorityColor : "#64748b";
+
+                            <tr style="cursor: pointer;" onclick="location.href='@Url.Action("Details", "Ticket", new { id = item.TicketId })'">
+                                <!-- Cột 1: Phiếu yêu cầu (Mỗi mục 1 dòng) -->
+                                <td class="text-center px-2">
+                                    <div class="mb-1">
+                                        <span class="fw-bold text-primary font-monospace" style="font-size: 0.88rem;">@item.TicketCode</span>
+                                    </div>
+                                    <div class="mb-1">
+                                        <span class="badge bg-light text-muted border py-1 px-2" style="font-size: 0.74rem; white-space: normal; line-height: 1.3;">
+                                            <i class="fas fa-folder me-1 text-warning small"></i>@item.CategoryName
+                                        </span>
+                                    </div>
+                                    <div class="fw-semibold text-dark" style="font-size: 0.88rem; line-height: 1.4; word-break: break-word;">
+                                        @item.Title
+                                    </div>
+                                </td>
+
+                                <!-- Cột 2: Trạng thái & Ưu tiên (Mỗi mục 1 dòng) -->
+                                <td class="text-center">
+                                    <div class="mb-1">
+                                        <span class="badge @sBg px-2 py-1" style="font-size: 0.78rem;">@item.Status</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge px-2 py-1" style="background-color: @priorityHex; color: white; font-size: 0.78rem;">
+                                            @item.Priority
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- Cột 3: Kỹ thuật viên & Người tạo (Mỗi mục 1 dòng) -->
+                                <td class="text-center">
+                                    @if (string.IsNullOrEmpty(item.AssignedTo) || item.AssignedTo == "Chưa phân công")
+                                    {
+                                        <span class="badge bg-light text-muted border px-2 py-1">
+                                            <i class="fas fa-user-clock me-1 text-secondary"></i>Chưa phân công
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <div class="fw-semibold text-dark">
+                                            <i class="fas fa-user-gear text-primary me-1"></i>@item.AssignedTo
+                                        </div>
+                                    }
+                                    <div class="text-muted mt-1" style="font-size: 0.76rem;">
+                                        <span class="text-secondary">Người tạo:</span> @item.CreatedBy
+                                    </div>
+                                </td>
+
+                                <!-- Cột 4: Thời gian & SLA (Mỗi mục 1 dòng) -->
+                                <td class="text-center">
+                                    <div class="small text-muted mb-1">
+                                        <i class="far fa-calendar-alt me-1"></i>@item.CreatedDate
+                                    </div>
+                                    <div>
+                                        @if (item.SLAColor == "danger")
+                                        {
+                                            <span class="badge bg-danger text-white">Quá hạn</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success text-white">Đúng hạn</span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <!-- Cột 5: Thao tác (1 nút Chi tiết căn giữa) -->
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", "Ticket", new { id = item.TicketId })" 
+                                       class="btn btn-sm btn-outline-primary px-3 py-1 text-nowrap rounded-2 shadow-none" 
+                                       title="Mở trang chi tiết &amp; xử lý" 
+                                       onclick="event.stopPropagation();">
+                                        <i class="fas fa-arrow-up-right-from-square me-1 small"></i>Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                                <span class="fw-semibold">Hiện chưa có phiếu yêu cầu nào trong hệ thống</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            var statusLabels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByStatus.Keys));
+            var statusData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByStatus.Values));
+            
+            var statusColors = [
+                '#4f7cff', // New - Soft Blue
+                '#f59e0b', // InProgress - Warm Amber
+                '#06b6d4', // Assigned - Cyan
+                '#22c55e', // Resolved - Green
+                '#94a3b8', // Closed - Slate
+                '#ef4444'  // Reopened - Red
+            ];
+
+            var ctxStatus = document.getElementById("statusChart");
+            if (ctxStatus) {
+                new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusData,
+                            backgroundColor: statusColors,
+                            borderWidth: 3,
+                            borderColor: '#ffffff'
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 16,
+                                    font: { family: 'Inter', size: 12 }
+                                }
+                            }
+                        },
+                        cutout: '68%'
+                    }
+                });
+            }
+
+            var categoryLabels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByCategory.Keys));
+            var categoryData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByCategory.Values));
+
+            var ctxCategory = document.getElementById("categoryChart");
+            if (ctxCategory) {
+                new Chart(ctxCategory, {
+                    type: 'bar',
+                    data: {
+                        labels: categoryLabels,
+                        datasets: [{
+                            label: "Số phiếu",
+                            backgroundColor: "#4f7cff",
+                            borderRadius: 8,
+                            data: categoryData,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { family: 'Inter' } },
+                                grid: { color: '#f0f4ff' }
+                            },
+                            x: {
+                                ticks: { font: { family: 'Inter' } },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

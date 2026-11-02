@@ -1,0 +1,27 @@
+@{
+    ViewBag.Title = "403 - Không có quyền truy cập";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-danger p-4">
+                <i class="fas fa-user-shield fa-4x text-danger mb-3"></i>
+                <h1 class="display-4 fw-bold text-danger">403</h1>
+                <h4 class="fw-bold">Bạn không có quyền truy cập trang này</h4>
+                <p class="text-muted mt-2">
+                    Khu vực này yêu cầu quyền quản trị viên (Admin) hoặc kỹ thuật viên (Technician). Vui lòng liên hệ người quản trị nếu bạn cho rằng đây là một sự nhầm lẫn.
+                </p>
+                <div class="mt-4">
+                    <a href="~/" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-1"></i> Quay về trang chủ
+                    </a>
+                    <a href="@Url.Action("Profile", "Account")" class="btn btn-outline-secondary">
+                        <i class="fas fa-user me-1"></i> Xem thông tin tài khoản
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

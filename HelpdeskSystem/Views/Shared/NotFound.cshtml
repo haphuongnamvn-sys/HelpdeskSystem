@@ -1,0 +1,27 @@
+@{
+    ViewBag.Title = "404 - Không tìm thấy trang";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-warning p-4">
+                <i class="fas fa-compass fa-4x text-warning mb-3"></i>
+                <h1 class="display-3 fw-bold text-dark">404</h1>
+                <h4 class="fw-bold">Không tìm thấy trang yêu cầu</h4>
+                <p class="text-muted mt-2">
+                    Trang bạn đang cố gắng truy cập không tồn tại, đã bị xóa hoặc đường dẫn bị sai.
+                </p>
+                <div class="mt-4">
+                    <a href="~/" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-1"></i> Trang chủ
+                    </a>
+                    <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-primary">
+                        <i class="fas fa-ticket-alt me-1"></i> Danh sách phiếu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

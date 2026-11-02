@@ -1,0 +1,196 @@
+@model IEnumerable<HelpdeskSystem.Models.Domain.KnowledgeBase>
+
+@{
+    ViewBag.Title = "Quản lý Cơ sở tri thức";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var kbList = Model != null ? Model.ToList() : new List<HelpdeskSystem.Models.Domain.KnowledgeBase>();
+}
+
+@section Styles {
+    <style>
+        #kbTable thead th {
+            text-align: center !important;
+            white-space: nowrap !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            color: #475569 !important;
+            background-color: #f8fafc !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            padding: 12px 14px !important;
+        }
+        #kbTable tbody td {
+            white-space: normal !important;
+            word-break: break-word !important;
+            vertical-align: middle !important;
+            padding: 12px 14px !important;
+        }
+        #kbTable tbody tr:hover {
+            background-color: #f8faff !important;
+        }
+
+        /* Hide sort arrows */
+        #kbTable.dataTable thead > tr > th:before,
+        #kbTable.dataTable thead > tr > th:after,
+        table.dataTable thead > tr > th.sorting:before,
+        table.dataTable thead > tr > th.sorting:after,
+        table.dataTable thead > tr > th.sorting_asc:before,
+        table.dataTable thead > tr > th.sorting_asc:after,
+        table.dataTable thead > tr > th.sorting_desc:before,
+        table.dataTable thead > tr > th.sorting_desc:after {
+            display: none !important;
+            content: none !important;
+        }
+        #kbTable thead > tr > th {
+            padding-right: 14px !important;
+        }
+
+        /* Hide DataTable info */
+        div.dataTables_wrapper div.dataTables_info {
+            display: none !important;
+        }
+
+        /* Square pagination */
+        div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+            gap: 4px !important;
+            margin: 0 !important;
+            padding-top: 10px !important;
+        }
+        div.dataTables_wrapper div.dataTables_paginate ul.pagination .page-item .page-link {
+            width: 28px !important;
+            min-width: 28px !important;
+            height: 28px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+        }
+    </style>
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h1 class="m-0 fw-bold fs-4 text-dark">Cơ sở Tri thức</h1>
+                <p class="text-muted small mb-0">Quản lý kho bài viết hướng dẫn xử lý sự cố và cẩm nang kỹ thuật</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="@Url.Action("Index", "KnowledgeBase")" class="btn btn-outline-secondary btn-sm px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> Giao diện người dùng
+                </a>
+                <a href="@Url.Action("Create", "KnowledgeBase")" class="btn btn-primary btn-sm px-3 py-2 shadow-sm">
+                    <i class="fas fa-plus me-1"></i> Viết bài mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <span class="text-dark fw-bold">Danh sách bài viết</span>
+                <span class="badge bg-light text-muted border">@kbList.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive p-3">
+                    <table class="table table-hover align-middle mb-0 w-100" id="kbTable">
+                        <thead>
+                            <tr>
+                                <th class="text-center text-nowrap" style="width: 45%;">BÀI VIẾT &amp; CHUYÊN MỤC</th>
+                                <th class="text-center text-nowrap" style="width: 25%;">TÁC GIẢ &amp; NGÀY TẠO</th>
+                                <th class="text-center text-nowrap" style="width: 15%;">LƯỢT XEM</th>
+                                <th class="text-center text-nowrap" style="width: 15%;">THAO TÁC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in kbList)
+                            {
+                                <tr style="cursor: pointer;" onclick="location.href='@Url.Action("Details", "KnowledgeBase", new { id = item.ArticleId })'">
+                                    <!-- Cột 1: Tiêu đề & Chuyên mục (Mỗi mục 1 dòng) -->
+                                    <td class="px-3">
+                                        <div class="fw-bold text-primary mb-1" style="font-size: 0.9rem; line-height: 1.4;">
+                                            @item.Title
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-light text-muted border py-1 px-2" style="font-size: 0.74rem;">
+                                                <i class="fas fa-folder me-1 text-warning small"></i>@(item.Category != null ? item.Category.Name : "Chung")
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Cột 2: Tác giả & Ngày tạo (Mỗi mục 1 dòng) -->
+                                    <td class="text-center">
+                                        <div class="fw-semibold text-dark mb-1" style="font-size: 0.85rem;">
+                                            <i class="fas fa-user-edit text-secondary me-1 small"></i>@(item.CreatedBy != null ? item.CreatedBy.FullName : "N/A")
+                                        </div>
+                                        <div class="text-muted small" style="font-size: 0.76rem;">
+                                            <i class="far fa-calendar-alt me-1"></i>@item.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </td>
+
+                                    <!-- Cột 3: Lượt xem -->
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border px-2 py-1">
+                                            <i class="far fa-eye text-primary me-1"></i>@item.ViewCount
+                                        </span>
+                                    </td>
+
+                                    <!-- Cột 4: Thao tác -->
+                                    <td class="text-center">
+                                        <div class="d-inline-flex gap-1" onclick="event.stopPropagation();">
+                                            <a href="@Url.Action("Edit", "KnowledgeBase", new { id = item.ArticleId })" 
+                                               class="btn btn-sm btn-outline-primary px-3 py-1 text-nowrap rounded-2 shadow-none" 
+                                               title="Chỉnh sửa bài viết">
+                                                <i class="fas fa-pen me-1 small"></i>Sửa
+                                            </a>
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                using (Html.BeginForm("Delete", "KnowledgeBase", new { id = item.ArticleId }, FormMethod.Post, new { style = "display:inline;", onsubmit = "return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');" }))
+                                                {
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-outline-danger px-2 py-1 text-nowrap rounded-2 shadow-none" 
+                                                            title="Xóa bài viết">
+                                                        <i class="far fa-trash-alt small"></i>
+                                                    </button>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#kbTable').DataTable({
+                "language": {
+                    "search": "",
+                    "searchPlaceholder": "Tìm kiếm bài viết...",
+                    "paginate": {
+                        "first": '<i class="fas fa-angle-double-left"></i>',
+                        "last": '<i class="fas fa-angle-double-right"></i>',
+                        "next": '<i class="fas fa-angle-right"></i>',
+                        "previous": '<i class="fas fa-angle-left"></i>'
+                    },
+                    "emptyTable": "Chưa có bài viết nào",
+                    "zeroRecords": "Không tìm thấy bài viết phù hợp"
+                },
+                "order": [[1, "desc"]],
+                "dom": '<"d-flex justify-content-between align-items-center mb-3"<"small text-muted"l><"ms-auto"f>>rt<"d-flex justify-content-end align-items-center mt-2"p>'
+            });
+        });
+    </script>
+}

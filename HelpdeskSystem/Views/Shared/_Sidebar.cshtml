@@ -1,0 +1,131 @@
+@using Microsoft.AspNet.Identity
+@{
+    string controller = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string action = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    bool isAdmin = User.IsInRole("Admin");
+    bool isTech  = User.IsInRole("Technician");
+    bool isUser  = !isAdmin && !isTech;
+}
+
+@if (Request.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutFormSidebar", @class = "d-none" }))
+    {
+        @Html.AntiForgeryToken()
+    }
+}
+
+<!-- User Profile Panel -->
+<div class="user-panel">
+    <img src="https://ui-avatars.com/api/?name=@(User.Identity.GetUserName())&background=38bdf8&color=0f172a&bold=true&size=64" alt="User Avatar">
+    <div class="info">
+        <a href="@Url.Action("Profile", "Account")" class="d-block text-white text-decoration-none fw-bold text-truncate" style="max-width: 160px;">
+            @(User.Identity.GetUserName())
+        </a>
+        <div class="mt-1">
+            @if (isAdmin) { <span class="badge bg-danger text-white">Quản trị viên</span> }
+            else if (isTech) { <span class="badge bg-warning text-dark">Kỹ thuật viên</span> }
+            else { <span class="badge bg-info text-dark">Người dùng</span> }
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Menu -->
+<nav class="mt-3 flex-grow-1">
+    <ul class="nav flex-column">
+
+        @* Dashboard: chỉ Admin và KTV *@
+        @if (isAdmin || isTech)
+        {
+            <li class="nav-item">
+                <a href="@Url.Action("Index", "Home")" class="nav-link @(controller == "Home" ? "active" : "")">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Tổng quan (Dashboard)</span>
+                </a>
+            </li>
+        }
+
+        <div class="sidebar-section-title">Quản lý Phiếu yêu cầu</div>
+
+        @* Danh sách phiếu: tất cả mọi người *@
+        <li class="nav-item">
+            <a href="@Url.Action("Index", "Ticket")" class="nav-link @(controller == "Ticket" && action == "Index" ? "active" : "")">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Danh sách phiếu</span>
+            </a>
+        </li>
+
+        @* Gửi yêu cầu mới: CHỈ Khách hàng (EndUser) *@
+        @if (isUser)
+        {
+            <li class="nav-item">
+                <a href="@Url.Action("Create", "Ticket")" class="nav-link @(controller == "Ticket" && action == "Create" ? "active" : "")">
+                    <i class="fas fa-plus-circle text-success"></i>
+                    <span>Gửi yêu cầu mới</span>
+                </a>
+            </li>
+        }
+
+        @* Báo cáo thống kê: chỉ Admin *@
+        @if (isAdmin)
+        {
+            <div class="sidebar-section-title">Hỗ trợ kỹ thuật</div>
+            <li class="nav-item">
+                <a href="@Url.Action("Index", "Report")" class="nav-link @(controller == "Report" ? "active" : "")">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Báo cáo &amp; Thống kê</span>
+                </a>
+            </li>
+        }
+
+        @* Quản trị hệ thống: chỉ Admin *@
+        @if (isAdmin)
+        {
+            <div class="sidebar-section-title">Quản trị hệ thống</div>
+            <li class="nav-item">
+                <a href="@Url.Action("Users", "Admin")" class="nav-link @(controller == "Admin" && action.StartsWith("User") ? "active" : "")">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Người dùng &amp; Quyền</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="@Url.Action("Departments", "Admin")" class="nav-link @(controller == "Admin" && action.StartsWith("Department") ? "active" : "")">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Phòng ban</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="@Url.Action("Categories", "Admin")" class="nav-link @(controller == "Admin" && action.StartsWith("Category") ? "active" : "")">
+                    <i class="fas fa-tags"></i>
+                    <span>Danh mục sự cố</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="@Url.Action("SLAConfig", "Admin")" class="nav-link @(controller == "Admin" && action == "SLAConfig" ? "active" : "")">
+                    <i class="fas fa-stopwatch"></i>
+                    <span>Cấu hình SLA</span>
+                </a>
+            </li>
+        }
+
+    </ul>
+</nav>
+
+<!-- Sidebar Footer -->
+<div class="sidebar-footer">
+    @if (Request.IsAuthenticated)
+    {
+        <button type="button"
+                class="btn btn-outline-danger btn-sm w-100 fw-bold d-flex align-items-center justify-content-center py-2"
+                onclick="if(confirm('Bạn có chắc chắn muốn đăng xuất không?')) { document.getElementById('logoutFormSidebar').submit(); }">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            <span>Đăng xuất</span>
+        </button>
+    }
+    else
+    {
+        <a href="@Url.Action("Login", "Account")" class="btn btn-primary btn-sm w-100 fw-bold">
+            <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
+        </a>
+    }
+</div>

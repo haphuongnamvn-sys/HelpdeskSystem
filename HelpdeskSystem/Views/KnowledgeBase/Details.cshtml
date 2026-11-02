@@ -1,0 +1,104 @@
+@model HelpdeskSystem.Models.Domain.KnowledgeBase
+
+@{
+    ViewBag.Title = Model.Title + " - Cơ sở tri thức";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var related = ViewBag.RelatedArticles as IEnumerable<HelpdeskSystem.Models.Domain.KnowledgeBase> ?? new List<HelpdeskSystem.Models.Domain.KnowledgeBase>();
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "KnowledgeBase")">Cơ sở tri thức</a></li>
+                <li class="breadcrumb-item">@(Model.Category != null ? Model.Category.Name : "Chung")</li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Cột trái: Nội dung bài viết -->
+            <div class="col-md-8 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+                            <div>
+                                <span class="badge bg-primary mb-2">@(Model.Category != null ? Model.Category.Name : "Chung")</span>
+                                <h2 class="fw-bold mb-1">@Model.Title</h2>
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i> Tác giả: @(Model.CreatedBy != null ? Model.CreatedBy.FullName : "Quản trị viên") |
+                                    <i class="fas fa-calendar-alt ms-2 me-1"></i> Ngày đăng: @Model.CreatedDate.ToString("dd/MM/yyyy HH:mm") |
+                                    <i class="fas fa-eye ms-2 me-1"></i> @Model.ViewCount lượt xem
+                                </small>
+                            </div>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Technician"))
+                            {
+                                <a href="@Url.Action("Edit", "KnowledgeBase", new { id = Model.ArticleId })" class="btn btn-outline-secondary btn-sm" title="Chỉnh sửa bài viết">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </a>
+                            }
+                        </div>
+
+                        <!-- Nội dung HTML -->
+                        <div class="article-content fs-6 lh-lg py-2">
+                            @Html.Raw(Model.Content)
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Hộp khảo sát hữu ích -->
+                        <div class="bg-light p-3 rounded text-center">
+                            <h6 class="fw-bold mb-2">Bài viết này có giúp ích cho bạn không?</h6>
+                            <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="this.className='btn btn-sm btn-success me-2'; this.innerHTML='<i class=\'fas fa-check\'></i> Cảm ơn bạn!';">
+                                <i class="fas fa-thumbs-up me-1"></i> Có, rất hữu ích
+                            </button>
+                            <a href="@Url.Action("Create", "Ticket")" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-headset me-1"></i> Chưa giải quyết được, tạo phiếu hỗ trợ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Bài viết liên quan & Nút hành động -->
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm border-primary">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-life-ring fa-3x text-primary mb-3"></i>
+                        <h5 class="fw-bold">Vẫn cần trợ giúp?</h5>
+                        <p class="text-muted small">Đội ngũ kỹ thuật viên của chúng tôi luôn sẵn sàng hỗ trợ trực tiếp cho bạn.</p>
+                        <a href="@Url.Action("Create", "Ticket")" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-1"></i> Gửi phiếu yêu cầu ngay
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="m-0 fw-bold"><i class="fas fa-link me-2 text-primary"></i>Bài viết cùng chuyên mục</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @if (related.Any())
+                        {
+                            foreach (var r in related)
+                            {
+                                <a href="@Url.Action("Details", "KnowledgeBase", new { id = r.ArticleId })" class="list-group-item list-group-item-action">
+                                    <div class="fw-bold text-dark">@r.Title</div>
+                                    <small class="text-muted"><i class="fas fa-eye me-1"></i>@r.ViewCount lượt xem</small>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-3 text-muted text-center small">Không có bài viết liên quan khác.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

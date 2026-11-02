@@ -1,0 +1,99 @@
+@model HelpdeskSystem.Models.ViewModels.ProfileViewModel
+@{
+    ViewBag.Title = "Hồ sơ cá nhân";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <!-- Profile Image -->
+        <div class="card card-primary card-outline">
+            <div class="card-body box-profile text-center">
+                <div class="text-center mb-3">
+                    <img class="profile-user-img img-fluid img-circle"
+                         src="https://ui-avatars.com/api/?name=@Model.FullName&size=128&background=random"
+                         alt="User profile picture" style="border-radius: 50%; width: 128px; height: 128px;">
+                </div>
+
+                <h3 class="profile-username">@Model.FullName</h3>
+                <p class="text-muted">@Model.RoleName</p>
+
+                <ul class="list-group list-group-unbordered mb-3 text-start">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <b>Phòng ban</b> <span>@Model.DepartmentName</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <b>Email</b> <span>@Model.Email</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <b>Điện thoại</b> <span>@Model.PhoneNumber</span>
+                    </li>
+                </ul>
+
+                <a href="@Url.Action("ChangePassword")" class="btn btn-warning w-100">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </a>
+            </div>
+            <!-- /.card-body -->
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header p-2">
+                <ul class="nav nav-pills">
+                    <li class="nav-item"><a class="nav-link active" href="#settings" data-bs-toggle="tab">Cập nhật thông tin</a></li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="settings">
+                        @using (Html.BeginForm("Profile", "Account", FormMethod.Post, new { @class = "form-horizontal" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(m => m.Id)
+                            @Html.HiddenFor(m => m.Email)
+                            
+                            if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger list-unstyled mb-0" })
+                                </div>
+                            }
+
+                            <div class="row mb-3">
+                                @Html.LabelFor(m => m.FullName, new { @class = "col-sm-2 col-form-label" })
+                                <div class="col-sm-10">
+                                    @Html.TextBoxFor(m => m.FullName, new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                @Html.LabelFor(m => m.Email, new { @class = "col-sm-2 col-form-label" })
+                                <div class="col-sm-10">
+                                    <input type="email" class="form-control" value="@Model.Email" disabled>
+                                    <small class="text-muted">Email không thể thay đổi</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                @Html.LabelFor(m => m.PhoneNumber, new { @class = "col-sm-2 col-form-label" })
+                                <div class="col-sm-10">
+                                    @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-10 offset-sm-2">
+                                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

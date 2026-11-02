@@ -1,0 +1,40 @@
+@model System.Web.Mvc.HandleErrorInfo
+
+@{
+    ViewBag.Title = "Đã xảy ra lỗi hệ thống";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-danger p-4">
+                <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                <h2 class="fw-bold text-danger">Rất tiếc! Đã có lỗi xảy ra</h2>
+                <p class="text-muted mt-2">
+                    Hệ thống gặp sự cố bất ngờ trong quá trình xử lý yêu cầu của bạn. Đội ngũ kỹ thuật đã được ghi nhận sự cố này.
+                </p>
+
+                @if (Model != null && HttpContext.Current.IsDebuggingEnabled)
+                {
+                    <div class="text-start bg-light p-3 rounded mt-3 small text-danger font-monospace" style="max-height: 250px; overflow-y: auto;">
+                        <strong>Action:</strong> @Model.ActionName <br />
+                        <strong>Controller:</strong> @Model.ControllerName <br />
+                        <strong>Exception:</strong> @(Model.Exception != null ? Model.Exception.Message : "") <br />
+                        <hr />
+                        <pre>@(Model.Exception != null ? Model.Exception.StackTrace : "")</pre>
+                    </div>
+                }
+
+                <div class="mt-4">
+                    <a href="~/" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-1"></i> Quay về trang chủ
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Quay lại trang trước
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

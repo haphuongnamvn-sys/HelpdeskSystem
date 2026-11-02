@@ -1,0 +1,56 @@
+@model HelpdeskSystem.Models.ViewModels.LoginViewModel
+@{
+    ViewBag.Title = "Đăng nhập";
+    Layout = "~/Views/Shared/_LayoutAuth.cshtml";
+}
+
+<div class="auth-card">
+    <h2 class="h5 fw-bold text-dark mb-1">Đăng nhập</h2>
+    <p class="text-muted small mb-4">Nhập thông tin tài khoản của bạn để tiếp tục</p>
+
+    @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+
+        if (!ViewData.ModelState.IsValid)
+        {
+            <div class="validation-summary-errors">
+                @Html.ValidationSummary(true, "", new { @class = "list-unstyled mb-0" })
+            </div>
+        }
+
+        <div class="mb-3">
+            @Html.LabelFor(m => m.Email, "Email", new { @class = "form-label" })
+            <div class="input-group">
+                <span class="input-group-text"><i class="far fa-envelope"></i></span>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "name@company.com", autocomplete = "username" })
+            </div>
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+        </div>
+
+        <div class="mb-3">
+            @Html.LabelFor(m => m.Password, "Mật khẩu", new { @class = "form-label" })
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Mật khẩu của bạn", autocomplete = "current-password" })
+            </div>
+            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+        </div>
+
+        <div class="mb-4 form-check">
+            @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
+            @Html.LabelFor(m => m.RememberMe, "Ghi nhớ đăng nhập", new { @class = "form-check-label text-muted small" })
+        </div>
+
+        <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-primary">
+                Đăng nhập
+            </button>
+        </div>
+    }
+
+    <div class="text-center pt-2 border-top">
+        <span class="text-muted small">Chưa có tài khoản?</span>
+        <a href="@Url.Action("Register", "Account")" class="small fw-semibold ms-1">Đăng ký tài khoản</a>
+    </div>
+</div>

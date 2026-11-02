@@ -1,0 +1,25 @@
+using System;
+using System.Data.Entity;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Optimization;
+using System.Web.Routing;
+using HelpdeskSystem.Models;
+using HelpdeskSystem.Migrations;
+
+namespace HelpdeskSystem
+{
+    public class MvcApplication : System.Web.HttpApplication
+    {
+        protected void Application_Start()
+        {
+            AreaRegistration.RegisterAllAreas();
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            // Initialize database with migrations + seed data
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<ApplicationDbContext, Configuration>());
+        }
+    }
+}
