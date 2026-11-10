@@ -1,0 +1,7 @@
+# Auto detect text files and perform LF to CRLF normalization
+* text=auto
+
+# GitHub Linguist language overrides
+# Classify Razor views (.cshtml) as C# so the repository shows C# as primary language
+*.cshtml linguist-language=C#
+*.html linguist-detectable=false
