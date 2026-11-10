@@ -18,11 +18,15 @@ namespace HelpdeskSystem.Models.Domain
 
         public int? DepartmentId { get; set; }
 
+        [Display(Name = "Đang hoạt động")]
+        public bool IsActive { get; set; }
+
         public virtual Department Department { get; set; }
         public virtual ICollection<Ticket> Tickets { get; set; }
 
         public Category()
         {
+            IsActive = true;
             Tickets = new HashSet<Ticket>();
         }
     }

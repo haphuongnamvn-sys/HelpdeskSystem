@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - Helpdesk Pro</title>
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Be Vietnam Pro -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
@@ -17,81 +17,78 @@
     <!-- Custom Theme -->
     <link href="~/Content/Site.css?v=@DateTime.Now.Ticks" rel="stylesheet">
     @RenderSection("Styles", required: false)
-    <style>
-        /* Auth modal overlay for login page link */
-        .auth-form-box { max-width: 480px; }
-    </style>
 </head>
-<body>
-    <div class="wrapper">
-        <!-- Sidebar -->
-        <aside class="main-sidebar" id="sidebar">
-            <a href="~/" class="sidebar-brand">
-                <i class="fas fa-headset"></i>
-                <span>Helpdesk Pro</span>
-            </a>
-            @Html.Partial("_Sidebar")
-        </aside>
-
-        <!-- Main Panel -->
-        <div class="main-panel">
-            <!-- Top Navbar -->
-            <nav class="navbar navbar-expand navbar-light main-header">
-                <div class="container-fluid px-0">
-                    <button type="button" id="sidebarCollapse" title="Mở/Đóng Menu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-
-                    <div class="d-none d-md-flex align-items-center ms-3" style="color:#8fa3bc;font-size:0.88rem">
-                        <i class="fas fa-circle-dot text-success me-2" style="font-size:0.65rem"></i>
-                        Hệ thống đang hoạt động bình thường
+<body class="d-flex flex-column min-vh-100 bg-page">
+    <!-- Header & Menu ngang cố định ở đầu (Chamtoeic Style) -->
+    <header class="app-header sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-2" style="border-color: #D9DEE5 !important;">
+            <div class="container-fluid px-3 px-lg-4">
+                <!-- Brand Logo -->
+                <a class="navbar-brand d-flex align-items-center me-3 me-xl-4 text-decoration-none" href="~/">
+                    <div class="brand-icon-box me-2">
+                        <i class="fas fa-headset text-white"></i>
                     </div>
+                    <span class="brand-title">Helpdesk<span class="text-primary">Pro</span></span>
+                </a>
 
-                    <ul class="navbar-nav ms-auto align-items-center">
+                <!-- Mobile Hamburger Toggle -->
+                <button class="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars fa-lg text-secondary"></i>
+                </button>
+
+                <!-- Navbar Collapse: Menu ngang ở giữa + User actions bên phải -->
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <!-- Menu ngang theo vai trò -->
+                    @Html.Partial("_HeaderMenu")
+
+                    <!-- Phía phải: Thông báo & Tài khoản -->
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-2 pt-2 pt-lg-0">
                         @Html.Partial("_LoginPartial")
                     </ul>
                 </div>
-            </nav>
-
-            <!-- Flash Alerts -->
-            <div class="px-4 pt-3">
-                @if (TempData["Success"] != null || TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-3" role="alert">
-                        <i class="fas fa-check-circle fa-lg flex-shrink-0"></i>
-                        <div><strong>Thành công!</strong> @(TempData["Success"] ?? TempData["SuccessMessage"])</div>
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-                    </div>
-                }
-                @if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
-                {
-                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-3" role="alert">
-                        <i class="fas fa-exclamation-triangle fa-lg flex-shrink-0"></i>
-                        <div><strong>Lỗi:</strong> @(TempData["Error"] ?? TempData["ErrorMessage"])</div>
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-                    </div>
-                }
             </div>
+        </nav>
+    </header>
 
-            <!-- Page Content -->
-            <div class="content">
-                <div class="container-fluid px-0">
-                    @RenderBody()
+    <!-- Main Content ở giữa -->
+    <main class="app-main flex-grow-1">
+        <!-- Flash Alerts -->
+        <div class="container-fluid px-3 px-lg-4 pt-3">
+            @if (TempData["Success"] != null || TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3 py-2 small" role="alert">
+                    <i class="fas fa-check-circle flex-shrink-0 text-success"></i>
+                    <div><strong>Thành công!</strong> @(TempData["Success"] ?? TempData["SuccessMessage"])</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
                 </div>
-            </div>
-
-            <!-- Footer -->
-            <footer class="main-footer">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                        <i class="fas fa-headset text-primary me-1"></i>
-                        <strong>Helpdesk Pro</strong> &mdash; Hệ thống quản lý yêu cầu hỗ trợ kỹ thuật
-                    </div>
-                    <div class="text-muted small">Phiên bản v2.0 &copy; 2026</div>
+            }
+            @if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3 py-2 small" role="alert">
+                    <i class="fas fa-exclamation-triangle flex-shrink-0 text-danger"></i>
+                    <div><strong>Lỗi:</strong> @(TempData["Error"] ?? TempData["ErrorMessage"])</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
                 </div>
-            </footer>
+            }
         </div>
-    </div>
+
+        <!-- Nội dung trang -->
+        <div class="content pb-4">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer ở cuối -->
+    <footer class="app-footer border-top bg-white py-3 mt-auto" style="border-color: #D9DEE5 !important;">
+        <div class="container-fluid px-3 px-lg-4 d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small">
+            <div>
+                <strong>Helpdesk Pro</strong> &mdash; Hệ thống Tiếp nhận &amp; Hỗ trợ Kỹ thuật Nội bộ
+            </div>
+            <div>
+                Đồ án Chuyên ngành Công nghệ Thông tin &bull; &copy; 2026
+            </div>
+        </div>
+    </footer>
 
     <!-- jQuery 3.7 -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -103,11 +100,7 @@
 
     <script>
         $(document).ready(function () {
-            // Sidebar toggle
-            $('#sidebarCollapse').on('click', function () {
-                $('#sidebar').toggleClass('collapsed');
-            });
-            // Auto-dismiss alerts after 5 seconds
+            // Tự động đóng thông báo sau 5 giây
             setTimeout(function () {
                 $('.alert.fade.show').alert('close');
             }, 5000);
@@ -116,6 +109,13 @@
 
     <!-- Notification Polling Script -->
     <script src="~/Scripts/notification-polling.js"></script>
+
+    <!-- Messenger Floating Chatbot Widget (dành cho Người dùng, Nhân viên phụ trách, Quản lý) -->
+    @if (Request.IsAuthenticated && !User.IsInRole("Admin"))
+    {
+        @Html.Partial("_ChatbotMessenger")
+    }
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

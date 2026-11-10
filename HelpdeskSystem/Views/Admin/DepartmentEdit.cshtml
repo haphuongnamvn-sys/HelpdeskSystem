@@ -1,46 +1,71 @@
-@model HelpdeskSystem.Models.Domain.Department
+﻿@model HelpdeskSystem.Models.Domain.Department
 
 @{
-    ViewBag.Title = "Chỉnh sửa Phòng Ban";
+    ViewBag.Title = "Chỉnh sửa phòng ban";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-fluid">
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Chỉnh sửa Phòng Ban</h6>
+<div class="container-fluid py-3 px-4">
+    
+    <div class="mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1">Chỉnh sửa phòng ban</h1>
+        <p class="text-muted small mb-0">Cập nhật tên, mô tả chức năng hoặc trạng thái hoạt động của đơn vị.</p>
+    </div>
+
+    
+    <div class="card bg-white border" style="border-color: #D9DEE5 !important; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+            <div>
+                <span class="fw-semibold text-dark">Thông tin phòng ban</span>
+                <span class="text-muted small ms-2">(Các mục có dấu <span class="text-danger">*</span> là bắt buộc)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-secondary border font-monospace">Mã: #@Model.DepartmentId</span>
+                <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">@(Model.IsActive ? "Đang hoạt động" : "Ngừng hoạt động")</span>
+            </div>
         </div>
-        <div class="card-body">
-            @using (Html.BeginForm("DepartmentEdit", "Admin", FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.DepartmentId)
 
+        @using (Html.BeginForm("DepartmentEdit", "Admin", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.DepartmentId)
+
+            <div class="card-body p-4">
                 <div class="mb-3">
-                    @Html.LabelFor(m => m.Name, "Tên phòng ban", new { @class = "form-label fw-bold" })
-                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "required" })
-                    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+                    <label class="form-label small fw-semibold text-dark mb-1" for="Name">
+                        Tên phòng ban <span class="text-danger">*</span>
+                    </label>
+                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "required", placeholder = "Ví dụ: Phòng Hỗ trợ Kỹ thuật, Phòng Hạ tầng..." })
+                    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger small" })
                 </div>
 
                 <div class="mb-3">
-                    @Html.LabelFor(m => m.Description, "Mô tả", new { @class = "form-label fw-bold" })
-                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3" })
-                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+                    <label class="form-label small fw-semibold text-dark mb-1" for="Description">
+                        Mô tả chức năng nhiệm vụ
+                    </label>
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "4", placeholder = "Mô tả phạm vi hỗ trợ và phân công nhiệm vụ của phòng ban..." })
+                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
                 </div>
 
-                <div class="mb-4">
-                    <div class="form-check form-switch mt-2">
+                <div class="p-3 bg-light border rounded mb-2" style="border-color: #D9DEE5 !important;">
+                    <div class="form-check">
                         @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input", id = "IsActiveCheck" })
-                        <label class="form-check-label fw-bold" for="IsActiveCheck">Trạng thái Hoạt động</label>
+                        <label class="form-check-label small fw-semibold text-dark" for="IsActiveCheck">
+                            Phòng ban đang hoạt động
+                        </label>
                     </div>
+                    <div class="text-muted small ps-4 mt-1">Khi phòng ban ngừng hoạt động, các danh mục và nhân sự trực thuộc sẽ cần được chuyển sang phòng ban khác để tiếp tục luân chuyển phiếu hỗ trợ.</div>
                 </div>
+            </div>
 
-                <div class="d-flex justify-content-end">
-                    <a href="@Url.Action("Departments", "Admin")" class="btn btn-secondary me-2">Hủy</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
-                </div>
-            }
-        </div>
+            <div class="card-footer bg-light px-4 py-3 border-top d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                <a href="@Url.Action("Departments", "Admin")" class="btn btn-outline-secondary px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                    <i class="fas fa-times me-1"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-primary px-4 fw-medium" style="background-color: #1F5FBF; border-color: #1F5FBF; border-radius: 6px;">
+                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                </button>
+            </div>
+        }
     </div>
 </div>
-
-

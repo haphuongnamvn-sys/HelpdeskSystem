@@ -1,0 +1,91 @@
+﻿@model IEnumerable<HelpdeskSystem.Models.Domain.Notification>
+@{
+    ViewBag.Title = "Thông báo hệ thống";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-3 px-4">
+    
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">Thông báo hệ thống</h1>
+            <p class="text-muted small mb-0">Cập nhật về tiến độ xử lý phiếu, phân công công việc và phản hồi mới.</p>
+        </div>
+        <div>
+            @if (Model != null && Model.Any(n => !n.IsRead))
+            {
+                <button type="button" id="btnMarkAll" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                    <i class="fas fa-check-double me-1"></i> Đánh dấu tất cả đã đọc
+                </button>
+            }
+        </div>
+    </div>
+
+    
+    <div class="card bg-white border" style="border-color: #D9DEE5 !important; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+            <div class="fw-semibold text-dark">Danh sách thông báo gần đây</div>
+            <span class="badge bg-light text-secondary border">@(Model != null ? Model.Count() : 0) thông báo</span>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="card-body text-center text-muted py-5">
+                <div class="mb-2">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-light text-secondary rounded-circle" style="width: 48px; height: 48px; border: 1px solid #D9DEE5;">
+                        <i class="far fa-bell-slash"></i>
+                    </span>
+                </div>
+                <div class="fw-medium text-dark">Bạn chưa có thông báo nào</div>
+                <div class="small text-muted mt-1">Các thông báo mới về phiếu yêu cầu sẽ xuất hiện tại đây.</div>
+            </div>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var n in Model)
+                {
+                    <a href="@(string.IsNullOrEmpty(n.Url) ? "#" : n.Url)"
+                       class="list-group-item list-group-item-action py-3 px-4 notify-item border-bottom @(n.IsRead ? "" : "bg-light")"
+                       style="border-color: #EDF0F2 !important;"
+                       data-id="@n.NotificationId">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!n.IsRead)
+                                {
+                                    <span class="badge rounded-circle bg-primary p-1" style="width: 8px; height: 8px;" title="Chưa đọc"></span>
+                                }
+                                <span class="small @(n.IsRead ? "text-dark" : "fw-bold text-dark")">@n.Title</span>
+                            </div>
+                            <span class="text-muted small" style="font-size: 12px;">
+                                <i class="far fa-clock me-1"></i>@n.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        </div>
+                        <div class="text-secondary small ps-3">@n.Message</div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Đánh dấu đã đọc khi nhấp vào một thông báo
+            $('.notify-item').on('click', function () {
+                var id = $(this).data('id');
+                if (id) {
+                    $.post('@Url.Action("MarkAsRead", "Notification")', { id: id });
+                }
+            });
+
+            // Đánh dấu tất cả đã đọc
+            $('#btnMarkAll').on('click', function () {
+                $.post('@Url.Action("MarkAllAsRead", "Notification")', function () {
+                    location.reload();
+                });
+            });
+        });
+    </script>
+}

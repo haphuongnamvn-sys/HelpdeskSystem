@@ -1,3 +1,4 @@
+﻿using HelpdeskSystem.Filters;
 using System;
 using System.Linq;
 using System.Web.Mvc;
@@ -7,7 +8,7 @@ using Microsoft.AspNet.Identity;
 
 namespace HelpdeskSystem.Controllers
 {
-    [Authorize]
+    [AuthorizeRoles("EndUser", "Manager", "Technician")]
     public class NotificationController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

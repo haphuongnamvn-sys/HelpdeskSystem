@@ -1,186 +1,126 @@
-@model IEnumerable<HelpdeskSystem.Models.ViewModels.UserManagementVM>
+﻿@model IEnumerable<HelpdeskSystem.Models.ViewModels.UserManagementVM>
 
 @{
-    ViewBag.Title = "Quản lý Người Dùng";
+    ViewBag.Title = "Quản lý tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     var userList = Model.ToList();
 }
 
-@section Styles {
-    <style>
-        #usersTable thead th {
-            text-align: center !important;
-            white-space: nowrap !important;
-            font-size: 0.82rem !important;
-            font-weight: 700 !important;
-            color: #475569 !important;
-            background-color: #f8fafc !important;
-            border-bottom: 2px solid #e2e8f0 !important;
-            padding: 12px 14px !important;
-        }
-        #usersTable tbody td {
-            white-space: normal !important;
-            word-break: break-word !important;
-            vertical-align: middle !important;
-            padding: 12px 14px !important;
-        }
-        #usersTable tbody tr:hover {
-            background-color: #f8faff !important;
-        }
-    </style>
-}
-
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h1 class="m-0 fw-bold fs-4 text-dark">Người Dùng</h1>
-                <p class="text-muted small mb-0">Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái hoạt động</p>
-            </div>
-            <a href="@Url.Action("Register", "Account")" class="btn btn-primary btn-sm px-3 py-2">
-                <i class="fas fa-user-plus me-1"></i> Tạo tài khoản mới
+<div class="container-fluid py-3 px-4">
+    
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">Quản lý tài khoản người dùng</h1>
+            <p class="text-muted small mb-0">Quản lý danh sách nhân sự, phân quyền vai trò và trạng thái hoạt động.</p>
+        </div>
+        <div>
+            <a href="@Url.Action("UserCreate", "Admin")" class="btn btn-primary btn-sm px-3">
+                <i class="fas fa-user-plus me-1"></i> Thêm tài khoản mới
             </a>
         </div>
     </div>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                <div>@TempData["SuccessMessage"]</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <div>@TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    
+    <div class="card mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <span class="fw-semibold text-dark">Danh sách người dùng</span>
+                <span class="badge bg-light text-secondary border ms-1">@userList.Count</span>
             </div>
-        }
-
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-dark fw-bold">Danh sách tài khoản</span>
-                    <span class="badge bg-light text-muted border">@userList.Count</span>
-                </div>
-                <div style="max-width: 280px; width: 100%;">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted small"></i></span>
-                        <input type="text" id="userSearchInput" class="form-control border-start-0 ps-0" placeholder="Tìm theo tên, email, vai trò..." />
-                    </div>
-                </div>
+            <div style="max-width: 260px; width: 100%;">
+                <input type="text" id="userSearchInput" class="form-control form-control-sm" placeholder="Tìm theo tên, email..." />
             </div>
-
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="usersTable">
                     <thead>
                         <tr>
-                            <th class="text-center text-nowrap" style="width: 35%;">TÀI KHOẢN &amp; HỌ TÊN</th>
-                            <th class="text-center text-nowrap" style="width: 20%;">PHÒNG BAN</th>
-                            <th class="text-center text-nowrap" style="width: 18%;">VAI TRÒ</th>
-                            <th class="text-center text-nowrap" style="width: 13%;">TRẠNG THÁI</th>
-                            <th class="text-center text-nowrap" style="width: 14%;">THAO TÁC</th>
+                            <th style="width: 32%;">Họ tên &amp; Email</th>
+                            <th style="width: 22%;">Phòng ban</th>
+                            <th style="width: 18%;">Vai trò</th>
+                            <th style="width: 14%;" class="text-center">Trạng thái</th>
+                            <th style="width: 14%;" class="text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in userList)
                         {
                             <tr class="user-row">
-                                <!-- Cột 1: Họ tên + Email (mỗi mục 1 dòng) -->
-                                <td class="px-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle bg-primary-soft text-primary d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 34px; height: 34px; font-size: 0.85rem;">
-                                            @(string.IsNullOrEmpty(item.FullName) ? "U" : item.FullName.Substring(0, 1).ToUpper())
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold text-dark" style="line-height: 1.3;">@item.FullName</div>
-                                            <div class="text-muted small mt-1" style="font-size: 0.78rem;">@item.Email</div>
-                                        </div>
-                                    </div>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.FullName</div>
+                                    <div class="text-muted small" style="font-size: 11px;">@item.Email</div>
                                 </td>
-
-                                <!-- Cột 2: Phòng ban -->
-                                <td class="text-center">
-                                    @if (!string.IsNullOrEmpty(item.DepartmentName))
-                                    {
-                                        <span class="badge bg-light text-dark border px-2 py-1">@item.DepartmentName</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">-</span>
-                                    }
+                                <td>
+                                    <span class="small text-dark">@(string.IsNullOrEmpty(item.DepartmentName) ? "Chưa thiết lập" : item.DepartmentName)</span>
                                 </td>
-
-                                <!-- Cột 3: Vai trò -->
-                                <td class="text-center">
+                                <td>
                                     @if (item.RoleName == "Admin")
                                     {
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Quản trị viên</span>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small">Quản trị viên</span>
+                                    }
+                                    else if (item.RoleName == "Manager")
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">Quản lý</span>
                                     }
                                     else if (item.RoleName == "Technician")
                                     {
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Kỹ thuật viên</span>
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 small">Kỹ thuật viên</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Người dùng</span>
+                                        <span class="badge bg-light text-secondary border px-2 py-1 small">Người dùng</span>
                                     }
                                 </td>
-
-                                <!-- Cột 4: Trạng thái kích hoạt -->
                                 <td class="text-center">
-                                    <div class="d-flex justify-content-center">
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input toggle-active" type="checkbox" data-id="@item.Id" @(item.IsActive ? "checked" : "") title="Kích hoạt / Khóa tài khoản" style="cursor: pointer;">
-                                        </div>
-                                    </div>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 small">Đã khóa</span>
+                                    }
                                 </td>
-
-                                <!-- Cột 5: Thao tác -->
                                 <td class="text-center">
-                                    <a href="@Url.Action("UserEdit", "Admin", new { id = item.Id })" 
-                                       class="btn btn-sm btn-outline-primary px-3 py-1 text-nowrap rounded-2 shadow-none" 
-                                       title="Chỉnh sửa vai trò &amp; phòng ban">
-                                        <i class="fas fa-pen me-1 small"></i>Sửa
-                                    </a>
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <a href="@Url.Action("UserEdit", "Admin", new { id = item.Id })" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Chỉnh sửa">
+                                            <i class="fas fa-edit small"></i>
+                                        </a>
+                                        @using (Html.BeginForm("UserToggleStatus", "Admin", new { id = item.Id }, FormMethod.Post, new { @class = "d-inline" }))
+                                        {
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2" title="@(item.IsActive ? "Khóa tài khoản" : "Mở khóa")">
+                                                <i class="fas @(item.IsActive ? "fa-lock" : "fa-unlock") small"></i>
+                                            </button>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-
-            <div class="card-footer bg-white border-top py-2 px-4 d-flex justify-content-between align-items-center text-muted small">
-                <span>Tổng cộng @userList.Count tài khoản</span>
-            </div>
         </div>
     </div>
-</section>
+</div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Live instant search
-            $('#userSearchInput').on('keyup', function() {
+        $(document).ready(function () {
+            $('#userSearchInput').on('keyup', function () {
                 var value = $(this).val().toLowerCase();
-                $("#usersTable tbody tr.user-row").filter(function() {
+                $('#usersTable tbody tr.user-row').filter(function () {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
-            });
-
-            // Toggle active switch
-            $('.toggle-active').change(function() {
-                var userId = $(this).data('id');
-                var isChecked = $(this).is(':checked');
-                $.ajax({
-                    url: '@Url.Action("UserToggleActive", "Admin")',
-                    type: 'POST',
-                    data: { id: userId },
-                    success: function(res) {
-                        if(!res.success) {
-                            alert("Có lỗi xảy ra khi cập nhật trạng thái!");
-                        }
-                    },
-                    error: function() {
-                        alert("Có lỗi kết nối máy chủ!");
-                    }
                 });
             });
         });

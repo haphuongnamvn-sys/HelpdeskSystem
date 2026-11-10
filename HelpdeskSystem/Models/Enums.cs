@@ -18,6 +18,14 @@ namespace HelpdeskSystem.Models
         [Display(Name = "Đã đóng")]
         Closed = 5,
         [Display(Name = "Mở lại")]
-        Reopened = 6
+        Reopened = 6,
+        [Display(Name = "Đã hủy")]
+        Cancelled = 7
+    }
+
+    public enum SenderType
+    {
+        User = 0,
+        Bot = 1
     }
 }

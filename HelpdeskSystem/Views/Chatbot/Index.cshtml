@@ -1,0 +1,205 @@
+﻿@model IEnumerable<HelpdeskSystem.Models.Domain.ChatbotMessage>
+@using HelpdeskSystem.Models
+@using HelpdeskSystem.Models.Domain
+@{
+    ViewBag.Title = "Hỏi đáp với Chatbot hỗ trợ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sessions = ViewBag.Sessions as List<ChatbotSession> ?? new List<ChatbotSession>();
+    var activeSession = ViewBag.ActiveSession as ChatbotSession;
+}
+
+<div class="container-fluid py-3 px-4">
+    
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">Trợ lý ảo hỗ trợ kỹ thuật</h1>
+            <p class="text-muted small mb-0">Hỏi đáp tự động về cách xử lý sự cố thiết bị, phần mềm và quy định SLA.</p>
+        </div>
+        @using (Html.BeginForm("NewSession", "Chatbot", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary btn-sm px-3">
+                <i class="fas fa-plus me-1"></i> Phiên hỏi đáp mới
+            </button>
+        }
+    </div>
+
+    <div class="row g-3">
+        <!-- Lịch sử các phiên hỏi đáp -->
+        <div class="col-lg-3 col-md-4">
+            <div class="card bg-white border h-100" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+                <div class="card-header bg-white fw-semibold text-dark py-3 px-3 border-bottom small" style="border-color: #D9DEE5 !important;">
+                    <i class="fas fa-history text-secondary me-2"></i>Lịch sử phiên hỏi đáp
+                </div>
+                <div class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto;">
+                    @if (!sessions.Any())
+                    {
+                        <div class="p-3 text-center text-muted small">Chưa có phiên hỏi đáp nào.</div>
+                    }
+                    @foreach (var s in sessions)
+                    {
+                        bool isActive = activeSession != null && s.ChatbotSessionId == activeSession.ChatbotSessionId;
+                        var firstUserMsg = s.Messages != null ? s.Messages.FirstOrDefault(m => m.SenderType == SenderType.User) : null;
+                        string title = firstUserMsg != null ? firstUserMsg.Content : "Phiên hỏi đáp #" + s.ChatbotSessionId;
+                        if (title.Length > 28) { title = title.Substring(0, 28) + "..."; }
+                        <a href="@Url.Action("Index", "Chatbot", new { sessionId = s.ChatbotSessionId })"
+                           class="list-group-item list-group-item-action @(isActive ? "active text-white" : "text-dark") py-2 px-3 border-bottom"
+                           style="border-color: #D9DEE5 !important; @(isActive ? "background-color: #1F5FBF !important;" : "")">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-medium small text-truncate" style="max-width: 140px;">@title</span>
+                                <small class="@(isActive ? "text-white-50" : "text-muted")" style="font-size: 11px;">@s.StartedAt.ToString("dd/MM HH:mm")</small>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Khung hội thoại Chatbot -->
+        <div class="col-lg-9 col-md-8">
+            <div class="card bg-white border d-flex flex-column" style="border-color: #D9DEE5 !important; border-radius: 6px; height: 560px;">
+                <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between border-bottom flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-light text-primary border d-flex align-items-center justify-content-center me-2" style="width:34px;height:34px;border-color:#D9DEE5 !important;">
+                            <i class="fas fa-headset small"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark small">Helpdesk Assistant Bot</div>
+                            <small class="text-success" style="font-size: 11px;"><i class="fas fa-circle me-1" style="font-size:6px;"></i>Trực tuyến • Tự động</small>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-ask py-1 px-2" style="font-size: 12px;" data-q="Phiếu của tôi đang ở trạng thái nào?">Phiếu của tôi</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-ask py-1 px-2" style="font-size: 12px;" data-q="Hướng dẫn kết nối máy in văn phòng">Lỗi máy in</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-ask py-1 px-2" style="font-size: 12px;" data-q="Mạng internet chập chờn xử lý thế nào?">Lỗi mạng</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-ask py-1 px-2" style="font-size: 12px;" data-q="Thời hạn xử lý theo mức ưu tiên SLA">Quy định SLA</button>
+                    </div>
+                </div>
+
+                <!-- Danh sách tin nhắn -->
+                <div id="chatbotMessages" class="card-body p-3" style="flex: 1; overflow-y: auto; background: #F5F6F8;">
+                    @foreach (var msg in Model)
+                    {
+                        bool isUser = msg.SenderType == SenderType.User;
+                        <div class="d-flex mb-3 @(isUser ? "justify-content-end" : "justify-content-start")">
+                            @if (!isUser)
+                            {
+                                <div class="rounded-circle bg-white text-primary border d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width:30px;height:30px;border-color:#D9DEE5 !important;">
+                                    <i class="fas fa-robot small"></i>
+                                </div>
+                            }
+                            <div class="p-3" style="max-width: 78%; border-radius: 6px; @(isUser ? "background:#1F5FBF;color:#ffffff;" : "background:#ffffff;color:#1F2933;border:1px solid #D9DEE5;")">
+                                <div class="bot-formatted-text" style="white-space: pre-line; font-size: 13px; line-height: 1.5;">@Html.Raw(FormatBotText(msg.Content, isUser))</div>
+                                <div class="text-end mt-1" style="font-size: 11px; opacity: 0.75;">@msg.CreatedAt.ToString("HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Ô nhập câu hỏi -->
+                <div class="card-footer bg-white border-top p-2" style="border-color: #D9DEE5 !important;">
+                    <form id="chatbotForm" class="d-flex gap-2 align-items-center">
+                        <input type="hidden" id="sessionIdInput" value="@(activeSession != null ? activeSession.ChatbotSessionId : 0)" />
+                        <input type="text" id="questionInput" class="form-control px-3" style="font-size: 13px; border-radius: 4px;"
+                               placeholder="Nhập câu hỏi của bạn (VD: Máy in không in được, Phiếu của tôi, Thời hạn SLA...)" autocomplete="off" required />
+                        <button type="submit" class="btn btn-primary px-3 fw-medium" style="height: 38px; border-radius: 4px;">
+                            <i class="fas fa-paper-plane me-1"></i> Gửi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string FormatBotText(string text, bool isUser)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        string encoded = System.Web.HttpUtility.HtmlEncode(text);
+        if (isUser) return encoded;
+
+        // Bold **text**
+        encoded = System.Text.RegularExpressions.Regex.Replace(encoded, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        // Links [label](url)
+        encoded = System.Text.RegularExpressions.Regex.Replace(encoded, @"\[(.+?)\]\((.+?)\)", "<a href='$2' class='fw-bold text-primary text-decoration-underline'>$1</a>");
+        return encoded;
+    }
+}
+
+@section scripts {
+    <script>
+        (function () {
+            var box = document.getElementById('chatbotMessages');
+            function scrollBottom() {
+                if (box) box.scrollTop = box.scrollHeight;
+            }
+            scrollBottom();
+
+            function formatReply(text) {
+                var div = document.createElement('div');
+                div.textContent = text;
+                var html = div.innerHTML;
+                html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\[(.+?)\]\((.+?)\)/g, "<a href='$2' class='fw-bold text-primary text-decoration-underline'>$1</a>");
+                return html;
+            }
+
+            function appendMessage(text, isUser, timeStr) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'd-flex mb-3 ' + (isUser ? 'justify-content-end' : 'justify-content-start');
+
+                var avatar = '';
+                if (!isUser) {
+                    avatar = '<div class="rounded-circle bg-white text-primary border d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width:30px;height:30px;border-color:#D9DEE5 !important;"><i class="fas fa-robot small"></i></div>';
+                }
+
+                var style = isUser
+                    ? 'max-width:78%;background:#1F5FBF;color:#fff;border-radius:6px;'
+                    : 'max-width:78%;background:#ffffff;color:#1F2933;border:1px solid #D9DEE5;border-radius:6px;';
+
+                var bodyHtml = isUser ? ('<div style="white-space:pre-line;font-size:13px;line-height:1.5;"></div>') : ('<div style="white-space:pre-line;font-size:13px;line-height:1.5;">' + formatReply(text) + '</div>');
+
+                wrapper.innerHTML = avatar +
+                    '<div class="p-3" style="' + style + '">' +
+                    bodyHtml +
+                    '<div class="text-end mt-1" style="font-size:11px;opacity:0.75;">' + (timeStr || 'Vừa xong') + '</div>' +
+                    '</div>';
+
+                if (isUser) {
+                    wrapper.querySelector('div[style*="white-space"]').textContent = text;
+                }
+
+                box.appendChild(wrapper);
+                scrollBottom();
+            }
+
+            function sendQuestion(q) {
+                if (!q || !q.trim()) return;
+                var sessionId = document.getElementById('sessionIdInput').value;
+                appendMessage(q.trim(), true, 'Vừa xong');
+                document.getElementById('questionInput').value = '';
+
+                $.post('@Url.Action("Ask", "Chatbot")', { sessionId: sessionId, question: q.trim() }, function (res) {
+                    if (res && res.success) {
+                        document.getElementById('sessionIdInput').value = res.sessionId;
+                        appendMessage(res.answer, false, res.time);
+                    } else {
+                        appendMessage(res.error || 'Có lỗi xảy ra, vui lòng thử lại.', false, '');
+                    }
+                });
+            }
+
+            document.getElementById('chatbotForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                sendQuestion(document.getElementById('questionInput').value);
+            });
+
+            document.querySelectorAll('.quick-ask').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    sendQuestion(this.getAttribute('data-q'));
+                });
+            });
+        })();
+    </script>
+}

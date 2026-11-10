@@ -1,152 +1,144 @@
-@model IEnumerable<HelpdeskSystem.Models.Domain.KnowledgeBase>
+﻿@model IEnumerable<HelpdeskSystem.Models.Domain.KnowledgeBase>
 
 @{
     ViewBag.Title = "Cơ sở tri thức & Hướng dẫn";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var categories = ViewBag.Categories as IEnumerable<HelpdeskSystem.Models.Domain.Category> ?? new List<HelpdeskSystem.Models.Domain.Category>();
-    var popular = ViewBag.PopularArticles as IEnumerable<HelpdeskSystem.Models.Domain.KnowledgeBase> ?? new List<HelpdeskSystem.Models.Domain.KnowledgeBase>();
+    var catArticleCounts = ViewBag.ArticleCountsByCategory as Dictionary<int, int> ?? new Dictionary<int, int>();
+    int totalArticles = ViewBag.TotalArticlesCount != null ? (int)ViewBag.TotalArticlesCount : (Model != null ? Model.Count() : 0);
     string currentSearch = ViewBag.Search as string ?? "";
     int? currentCat = ViewBag.SelectedCategory as int?;
+    var articles = Model != null ? Model.ToList() : new List<HelpdeskSystem.Models.Domain.KnowledgeBase>();
+    var currentCatObj = currentCat.HasValue ? categories.FirstOrDefault(c => c.CategoryId == currentCat.Value) : null;
 }
 
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0"><i class="fas fa-book-reader text-primary me-2"></i>Cơ sở tri thức (FAQ)</h1>
-            </div>
-            <div class="col-sm-6 text-end">
-                @if (User.IsInRole("Admin") || User.IsInRole("Technician"))
+<div class="container-fluid py-3 px-4">
+    
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">Cơ sở tri thức &amp; Hướng dẫn</h1>
+            <p class="text-muted small mb-0">Tra cứu nhanh các giải pháp xử lý sự cố thường gặp trước khi gửi phiếu yêu cầu.</p>
+        </div>
+        <div>
+            @if (User.IsInRole("Admin") || User.IsInRole("Technician") || User.IsInRole("Manager"))
+            {
+                <a href="@Url.Action("Manage", "KnowledgeBase")" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                    <i class="fas fa-cog me-1"></i> Quản lý bài viết
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Khối tổng thể thống nhất (1 Card duy nhất, không tách ô) -->
+    <div class="card bg-white border" style="border-color: #D9DEE5; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <!-- Thanh công cụ nhỏ gọn tích hợp ô tìm kiếm -->
+        <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-semibold text-dark small">
+                    @(currentCatObj != null ? currentCatObj.Name : "Tất cả bài viết")
+                </span>
+                <span class="badge bg-light text-secondary border small">@articles.Count bài</span>
+                @if (!string.IsNullOrEmpty(currentSearch) || currentCat.HasValue)
                 {
-                    <a href="@Url.Action("Manage", "KnowledgeBase")" class="btn btn-outline-primary">
-                        <i class="fas fa-cog"></i> Quản lý bài viết
+                    <a href="@Url.Action("Index", "KnowledgeBase")" class="text-decoration-none small text-danger ms-2" title="Xóa toàn bộ bộ lọc">
+                        <i class="fas fa-times-circle me-1"></i> Xóa lọc
                     </a>
                 }
             </div>
-        </div>
-    </div>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        <!-- Hero Search Box -->
-        <div class="card bg-primary text-white mb-4 shadow-sm">
-            <div class="card-body p-4 text-center">
-                <h3 class="fw-bold mb-2">Chúng tôi có thể giúp gì cho bạn?</h3>
-                <p class="mb-3 text-white-50">Tìm kiếm các hướng dẫn xử lý sự cố thường gặp trước khi gửi phiếu yêu cầu</p>
-                <form method="get" action="@Url.Action("Index", "KnowledgeBase")" class="d-flex justify-content-center">
-                    <div class="input-group" style="max-width: 600px;">
-                        <input type="text" name="search" class="form-control form-control-lg" placeholder="Nhập từ khóa (máy in, mật khẩu, wifi, v.v.)..." value="@currentSearch" />
-                        <button type="submit" class="btn btn-light btn-lg px-4"><i class="fas fa-search text-primary"></i> Tìm</button>
-                    </div>
-                </form>
-            </div>
+            <!-- Thanh tìm kiếm nhỏ gọn -->
+            <form method="get" action="@Url.Action("Index", "KnowledgeBase")" class="d-flex align-items-center my-1" style="max-width: 320px; width: 100%;">
+                @if (currentCat.HasValue)
+                {
+                    <input type="hidden" name="categoryId" value="@currentCat" />
+                }
+                <div class="input-group input-group-sm">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm bài viết..." value="@currentSearch" style="border-color: #D9DEE5;" />
+                    <button type="submit" class="btn btn-primary px-3" style="background-color: #1F5FBF; border-color: #1F5FBF;">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    @if (!string.IsNullOrEmpty(currentSearch))
+                    {
+                        <a href="@Url.Action("Index", "KnowledgeBase", new { categoryId = currentCat })" class="btn btn-outline-secondary" title="Hủy tìm kiếm" style="border-color: #D9DEE5;">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    }
+                </div>
+            </form>
         </div>
 
-        <div class="row">
-            <!-- Sidebar: Danh mục & Bài xem nhiều -->
-            <div class="col-md-4 mb-4">
-                <!-- Danh mục -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-light">
-                        <h6 class="m-0 fw-bold"><i class="fas fa-folder me-2 text-warning"></i>Chủ đề theo danh mục</h6>
+        <!-- Thân Card chia 2 cột: Danh mục bên trái thu hẹp, Danh sách bài viết bên phải mở rộng -->
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <!-- Cột trái: Chủ đề theo danh mục (chiều rộng nhỏ gọn col-lg-3 col-md-4) -->
+                <div class="col-lg-3 col-md-4 border-end" style="border-color: #D9DEE5 !important; background-color: #FAFBFC;">
+                    <div class="p-3 border-bottom text-muted small fw-bold text-uppercase" style="border-color: #D9DEE5 !important; letter-spacing: 0.5px; font-size: 11px;">
+                        <i class="fas fa-folder me-1 text-secondary"></i> Chủ đề theo danh mục
                     </div>
-                    <div class="list-group list-group-flush">
-                        <a href="@Url.Action("Index", "KnowledgeBase")" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(!currentCat.HasValue ? "active" : "")">
+                    <div class="list-group list-group-flush small" style="background: transparent;">
+                        <a href="@Url.Action("Index", "KnowledgeBase", new { search = currentSearch })" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2 border-0 @(!currentCat.HasValue ? "bg-white fw-bold text-primary border-start border-3 border-primary shadow-sm" : "bg-transparent text-dark")">
                             <span>Tất cả danh mục</span>
+                            <span class="badge @(!currentCat.HasValue ? "bg-primary text-white" : "bg-light text-secondary border")">@totalArticles</span>
                         </a>
                         @foreach (var cat in categories)
                         {
-                            <a href="@Url.Action("Index", "KnowledgeBase", new { categoryId = cat.CategoryId })" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(currentCat == cat.CategoryId ? "active" : "")">
-                                <span>@cat.Name</span>
-                                <span class="badge bg-secondary rounded-pill">@(cat.Tickets != null ? cat.Tickets.Count : 0)</span>
+                            int count = catArticleCounts.ContainsKey(cat.CategoryId) ? catArticleCounts[cat.CategoryId] : 0;
+                            bool isSelected = currentCat == cat.CategoryId;
+                            <a href="@Url.Action("Index", "KnowledgeBase", new { categoryId = cat.CategoryId, search = currentSearch })" 
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2 border-0 @(isSelected ? "bg-white fw-bold text-primary border-start border-3 border-primary shadow-sm" : "bg-transparent text-dark")">
+                                <span class="text-truncate me-2">@cat.Name</span>
+                                <span class="badge @(isSelected ? "bg-primary text-white" : "bg-light text-secondary border")">@count</span>
                             </a>
                         }
                     </div>
                 </div>
 
-                <!-- Bài viết xem nhiều -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                        <h6 class="m-0 fw-bold"><i class="fas fa-fire me-2 text-danger"></i>Bài viết xem nhiều nhất</h6>
-                    </div>
+                <!-- Cột phải: Danh sách bài viết (chiều rộng lớn col-lg-9 col-md-8) -->
+                <div class="col-lg-9 col-md-8 bg-white">
                     <div class="list-group list-group-flush">
-                        @if (popular.Any())
+                        @if (articles.Any())
                         {
-                            foreach (var p in popular)
+                            foreach (var item in articles)
                             {
-                                <a href="@Url.Action("Details", "KnowledgeBase", new { id = p.ArticleId })" class="list-group-item list-group-item-action">
-                                    <div class="fw-bold text-dark">@p.Title</div>
-                                    <small class="text-muted"><i class="fas fa-eye me-1"></i>@p.ViewCount lượt xem</small>
-                                </a>
+                                <div class="list-group-item p-3 p-md-4 border-bottom" style="border-color: #EDF0F2 !important;">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                        <h2 class="h6 mb-0 fw-bold">
+                                            <a href="@Url.Action("Details", "KnowledgeBase", new { id = item.ArticleId })" class="text-primary text-decoration-none">
+                                                @item.Title
+                                            </a>
+                                        </h2>
+                                        @if (item.Category != null)
+                                        {
+                                            <span class="badge bg-light text-secondary border small">@item.Category.Name</span>
+                                        }
+                                    </div>
+                                    <p class="text-muted small mb-2 lh-base" style="max-height: 44px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        @(item.Content != null ? System.Text.RegularExpressions.Regex.Replace(item.Content, "<.*?>", string.Empty) : "")
+                                    </p>
+                                    <div class="d-flex align-items-center gap-3 text-muted small" style="font-size: 12px;">
+                                        <span><i class="far fa-calendar-alt me-1"></i>@item.CreatedDate.ToString("dd/MM/yyyy")</span>
+                                        <span><i class="far fa-eye me-1"></i>@item.ViewCount lượt xem</span>
+                                        @if (item.HelpfulCount > 0)
+                                        {
+                                            <span class="text-success"><i class="far fa-thumbs-up me-1"></i>@item.HelpfulCount hữu ích</span>
+                                        }
+                                    </div>
+                                </div>
                             }
                         }
                         else
                         {
-                            <div class="p-3 text-muted text-center">Chưa có bài viết nổi bật.</div>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <!-- Danh sách bài viết -->
-            <div class="col-md-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold">Danh sách bài viết hướng dẫn (@Model.Count())</h6>
-                        @if (!string.IsNullOrEmpty(currentSearch) || currentCat.HasValue)
-                        {
-                            <a href="@Url.Action("Index", "KnowledgeBase")" class="text-decoration-none small text-danger">
-                                <i class="fas fa-times-circle"></i> Xóa bộ lọc
-                            </a>
-                        }
-                    </div>
-                    <div class="card-body">
-                        @if (Model.Any())
-                        {
-                            <div class="row g-3">
-                                @foreach (var item in Model)
+                            <div class="p-5 text-center text-muted">
+                                <i class="fas fa-search fa-3x mb-3 text-secondary opacity-50"></i>
+                                <div class="fw-semibold text-dark mb-1">Không tìm thấy bài viết nào</div>
+                                <p class="small text-muted mb-3">Không có bài viết hướng dẫn nào phù hợp với danh mục hoặc từ khóa tìm kiếm.</p>
+                                @if (!string.IsNullOrEmpty(currentSearch) || currentCat.HasValue)
                                 {
-                                    <div class="col-12">
-                                        <div class="card h-100 border-start border-4 border-primary">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge bg-info text-dark">@(item.Category != null ? item.Category.Name : "Chung")</span>
-                                                    <small class="text-muted"><i class="fas fa-eye me-1"></i>@item.ViewCount lượt xem</small>
-                                                </div>
-                                                <h5 class="card-title fw-bold mt-2">
-                                                    <a href="@Url.Action("Details", "KnowledgeBase", new { id = item.ArticleId })" class="text-decoration-none text-dark">
-                                                        @item.Title
-                                                    </a>
-                                                </h5>
-                                                <p class="card-text text-muted small mt-2">
-                                                    @{
-                                                        string plainText = System.Text.RegularExpressions.Regex.Replace(item.Content ?? "", "<.*?>", string.Empty);
-                                                        string snippet = plainText.Length > 150 ? plainText.Substring(0, 150) + "..." : plainText;
-                                                    }
-                                                    @snippet
-                                                </p>
-                                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                                    <small class="text-muted">Cập nhật: @(item.UpdatedDate.HasValue ? item.UpdatedDate.Value.ToString("dd/MM/yyyy") : item.CreatedDate.ToString("dd/MM/yyyy"))</small>
-                                                    <a href="@Url.Action("Details", "KnowledgeBase", new { id = item.ArticleId })" class="btn btn-sm btn-outline-primary">
-                                                        Xem hướng dẫn <i class="fas fa-arrow-right ms-1"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <a href="@Url.Action("Index", "KnowledgeBase")" class="btn btn-outline-primary btn-sm px-3" style="border-radius: 6px;">
+                                        <i class="fas fa-redo me-1"></i> Xem tất cả bài viết
+                                    </a>
                                 }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-5 text-muted">
-                                <i class="fas fa-search fa-3x mb-3 text-secondary"></i>
-                                <h5>Không tìm thấy bài viết nào phù hợp</h5>
-                                <p class="small">Hãy thử tìm với từ khóa khác hoặc gửi yêu cầu hỗ trợ cho kỹ thuật viên.</p>
-                                <a href="@Url.Action("Create", "Ticket")" class="btn btn-primary btn-sm mt-2">
-                                    <i class="fas fa-plus-circle"></i> Tạo phiếu hỗ trợ ngay
-                                </a>
                             </div>
                         }
                     </div>
@@ -154,4 +146,4 @@
             </div>
         </div>
     </div>
-</section>
+</div>

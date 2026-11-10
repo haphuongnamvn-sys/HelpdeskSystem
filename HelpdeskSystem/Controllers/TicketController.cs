@@ -1,3 +1,4 @@
+using HelpdeskSystem.Filters;
 using System;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,7 @@ using Microsoft.AspNet.Identity;
 
 namespace HelpdeskSystem.Controllers
 {
-    [Authorize]
+    [AuthorizeRoles("EndUser", "Manager", "Technician")]
     public class TicketController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -28,7 +29,7 @@ namespace HelpdeskSystem.Controllers
             _notificationService = new NotificationService(_unitOfWork);
         }
 
-        private bool IsAdmin() => User.IsInRole("Admin");
+        private bool IsManagerOrAdmin() => User.IsInRole("Admin") || User.IsInRole("Manager");
         private bool IsTechnician() => User.IsInRole("Technician");
         private string CurrentUserId => User.Identity.GetUserId();
 
@@ -37,11 +38,19 @@ namespace HelpdeskSystem.Controllers
         {
             if (filter == null) filter = new TicketFilterVM();
 
+            // Kỹ thuật viên không quản lý phiếu chưa phân công
+            if (IsTechnician() && string.Equals(filter.QuickFilter, "unassigned", StringComparison.OrdinalIgnoreCase))
+            {
+                filter.QuickFilter = null;
+            }
+
             // Populate dropdown data
             filter.Categories = _unitOfWork.Categories.GetAll()
+                .Where(c => c.IsActive)
                 .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                 .ToList();
             filter.Priorities = _unitOfWork.Priorities.GetAll()
+                .OrderBy(p => p.Level)
                 .Select(p => new SelectListItem { Value = p.PriorityId.ToString(), Text = p.Name })
                 .ToList();
             filter.Statuses = Enum.GetValues(typeof(TicketStatus))
@@ -53,21 +62,24 @@ namespace HelpdeskSystem.Controllers
                 })
                 .ToList();
 
-            var vm = _ticketService.GetTicketList(filter, CurrentUserId, IsAdmin(), IsTechnician());
+            var vm = _ticketService.GetTicketList(filter, CurrentUserId, IsManagerOrAdmin(), IsTechnician());
             return View(vm);
         }
 
         // GET: /Ticket/Create
-        [Authorize(Roles = "EndUser")]
+        [AuthorizeRoles("EndUser")]
         public ActionResult Create()
         {
             var vm = new TicketCreateVM
             {
+                PriorityId = 3, // Mặc định: Trung bình
                 Categories = _unitOfWork.Categories.GetAll()
+                    .Where(c => c.IsActive)
                     .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                     .ToList(),
                 Priorities = _unitOfWork.Priorities.GetAll()
-                    .Select(p => new SelectListItem { Value = p.PriorityId.ToString(), Text = p.Name })
+                    .OrderBy(p => p.Level)
+                    .Select(p => new SelectListItem { Value = p.PriorityId.ToString(), Text = p.Name, Selected = p.PriorityId == 3 })
                     .ToList()
             };
             return View(vm);
@@ -76,9 +88,8 @@ namespace HelpdeskSystem.Controllers
         // POST: /Ticket/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "EndUser")]
+        [AuthorizeRoles("EndUser")]
         public ActionResult Create(TicketCreateVM model)
-
         {
             if (ModelState.IsValid)
             {
@@ -112,15 +123,17 @@ namespace HelpdeskSystem.Controllers
 
                 _notificationService.NotifyTicketCreated(ticket.TicketId, ticket.TicketCode);
 
-                TempData["Success"] = "Phiếu yêu cầu đã được tạo thành công!";
+                TempData["Success"] = $"Tạo phiếu thành công! Mã phiếu của bạn: {ticket.TicketCode}";
                 return RedirectToAction("Index");
             }
 
             // Repopulate dropdowns on validation failure
             model.Categories = _unitOfWork.Categories.GetAll()
+                .Where(c => c.IsActive)
                 .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                 .ToList();
             model.Priorities = _unitOfWork.Priorities.GetAll()
+                .OrderBy(p => p.Level)
                 .Select(p => new SelectListItem { Value = p.PriorityId.ToString(), Text = p.Name })
                 .ToList();
             return View(model);
@@ -129,18 +142,21 @@ namespace HelpdeskSystem.Controllers
         // GET: /Ticket/Details/5
         public ActionResult Details(int id)
         {
-            var vm = _ticketService.GetTicketDetail(id, CurrentUserId, IsAdmin(), IsTechnician());
+            var vm = _ticketService.GetTicketDetail(id, CurrentUserId, IsManagerOrAdmin(), IsTechnician());
             if (vm == null) return HttpNotFound();
 
             // Check permissions to view
-            if (!IsAdmin() && !IsTechnician() && vm.CreatedById != CurrentUserId)
+            if (!IsManagerOrAdmin() && !IsTechnician() && vm.CreatedById != CurrentUserId)
             {
                 return new HttpStatusCodeResult(403, "Bạn không có quyền xem phiếu này.");
             }
 
             // Populate technician dropdown for assignment
-            if (IsAdmin())
+            if (IsManagerOrAdmin())
             {
+                var techRoleId = _unitOfWork.Context.Set<Microsoft.AspNet.Identity.EntityFramework.IdentityRole>()
+                    .Where(r => r.Name == "Technician").Select(r => r.Id).FirstOrDefault();
+
                 vm.Technicians = _unitOfWork.Context.Users
                     .Where(u => u.IsActive)
                     .ToList()
@@ -148,14 +164,13 @@ namespace HelpdeskSystem.Controllers
                     {
                         var roles = _unitOfWork.Context.Set<Microsoft.AspNet.Identity.EntityFramework.IdentityUserRole>()
                             .Where(r => r.UserId == u.Id).Select(r => r.RoleId).ToList();
-                        var techRoleId = _unitOfWork.Context.Set<Microsoft.AspNet.Identity.EntityFramework.IdentityRole>()
-                            .Where(r => r.Name == "Technician").Select(r => r.Id).FirstOrDefault();
                         return roles.Contains(techRoleId);
                     })
                     .Select(u => new SelectListItem
                     {
                         Value = u.Id,
-                        Text = u.FullName + " (" + (u.Department != null ? u.Department.Name : "N/A") + ")"
+                        Text = u.FullName + " (" + (u.Department != null ? u.Department.Name : "IT Support") + ")",
+                        Selected = u.Id == vm.AssignedToId
                     })
                     .ToList();
             }
@@ -166,11 +181,10 @@ namespace HelpdeskSystem.Controllers
         // GET: /Ticket/Chat/5
         public ActionResult Chat(int id)
         {
-            var vm = _ticketService.GetTicketDetail(id, CurrentUserId, IsAdmin(), IsTechnician());
+            var vm = _ticketService.GetTicketDetail(id, CurrentUserId, IsManagerOrAdmin(), IsTechnician());
             if (vm == null) return HttpNotFound();
 
-            // Check permissions to view
-            if (!IsAdmin() && !IsTechnician() && vm.CreatedById != CurrentUserId)
+            if (!IsManagerOrAdmin() && !IsTechnician() && vm.CreatedById != CurrentUserId)
             {
                 return new HttpStatusCodeResult(403, "Bạn không có quyền xem phiếu này.");
             }
@@ -181,48 +195,70 @@ namespace HelpdeskSystem.Controllers
         // POST: /Ticket/Assign
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public ActionResult Assign(int ticketId, string technicianId)
+        [AuthorizeRoles("Manager")]
+        public ActionResult Assign(int ticketId, string technicianId, int? priorityId, int? categoryId, string returnUrl = null)
         {
             if (string.IsNullOrEmpty(technicianId))
             {
-                TempData["Error"] = "Vui lòng chọn nhân viên xử lý.";
+                TempData["Error"] = "Vui lòng chọn nhân viên phụ trách xử lý.";
+                if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
                 return RedirectToAction("Details", new { id = ticketId });
             }
 
-            _ticketService.AssignTicket(ticketId, technicianId, CurrentUserId);
+            _ticketService.AssignTicket(ticketId, technicianId, CurrentUserId, priorityId, categoryId);
 
             var ticket = _unitOfWork.Tickets.GetById(ticketId);
             _notificationService.NotifyTicketAssigned(ticketId, ticket.TicketCode, technicianId);
 
-            TempData["Success"] = "Đã phân công nhân viên xử lý.";
+            TempData["Success"] = "Phân công nhân viên phụ trách thành công!";
+            if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction("Details", new { id = ticketId });
         }
 
         // POST: /Ticket/ChangeStatus
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ChangeStatus(int ticketId, TicketStatus newStatus)
+        public ActionResult ChangeStatus(int ticketId, TicketStatus newStatus, string solution = null, string returnUrl = null)
         {
             var ticket = _unitOfWork.Tickets.GetById(ticketId);
             if (ticket == null) return HttpNotFound();
 
             // Validate permissions
-            var allowedTransitions = _ticketService.GetAllowedTransitions(ticket.Status, IsAdmin(), IsTechnician());
+            var allowedTransitions = _ticketService.GetAllowedTransitions(ticket.Status, IsManagerOrAdmin(), IsTechnician());
             if (!allowedTransitions.Contains(newStatus))
             {
                 TempData["Error"] = "Không thể chuyển sang trạng thái này.";
+                if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
                 return RedirectToAction("Details", new { id = ticketId });
             }
 
-            // EndUser can only reopen (Resolved → Reopened)
-            if (!IsAdmin() && !IsTechnician() && newStatus != TicketStatus.Reopened)
+            // EndUser permissions check
+            if (!IsManagerOrAdmin() && !IsTechnician())
             {
-                TempData["Error"] = "Bạn không có quyền thực hiện thao tác này.";
+                if (ticket.CreatedById != CurrentUserId)
+                {
+                    TempData["Error"] = "Bạn không có quyền thực hiện thao tác trên phiếu này.";
+                    if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
+                    return RedirectToAction("Details", new { id = ticketId });
+                }
+
+                if (newStatus == TicketStatus.Cancelled && ticket.ReceivedDate.HasValue)
+                {
+                    TempData["Error"] = "Phiếu đã được nhân viên tiếp nhận nên không thể hủy.";
+                    if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
+                    return RedirectToAction("Details", new { id = ticketId });
+                }
+            }
+
+            // Require solution when Technician/Admin marks ticket as Resolved (UC06 - 2.6.6 bước 2.3)
+            if (newStatus == TicketStatus.Resolved && string.IsNullOrWhiteSpace(solution) && string.IsNullOrWhiteSpace(ticket.Solution))
+            {
+                TempData["Error"] = "Vui lòng nhập giải pháp xử lý trước khi đánh dấu Đã giải quyết.";
+                if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
                 return RedirectToAction("Details", new { id = ticketId });
             }
 
-            _ticketService.ChangeStatus(ticketId, newStatus, CurrentUserId);
+            _ticketService.ChangeStatus(ticketId, newStatus, CurrentUserId, solution);
 
             var statusName = _ticketService.GetStatusDisplayName(newStatus);
             _notificationService.NotifyTicketStatusChanged(ticketId, ticket.TicketCode, statusName, ticket.CreatedById);
@@ -232,23 +268,37 @@ namespace HelpdeskSystem.Controllers
                 _notificationService.NotifyTicketResolved(ticketId, ticket.TicketCode, ticket.CreatedById);
             }
 
-            TempData["Success"] = $"Đã cập nhật trạng thái: {statusName}";
+            TempData["Success"] = $"Đã cập nhật trạng thái phiếu: {statusName}";
+            if (!string.IsNullOrEmpty(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction("Details", new { id = ticketId });
         }
 
         // POST: /Ticket/Rate
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "EndUser")]
+        [AuthorizeRoles("EndUser")]
         public ActionResult Rate(int ticketId, int stars, string comment)
         {
+            if (stars < 1 || stars > 5)
+            {
+                TempData["Error"] = "Vui lòng chọn số sao đánh giá (từ 1 đến 5 sao).";
+                return RedirectToAction("Details", new { id = ticketId });
+            }
+
+            var ticket = _unitOfWork.Tickets.GetById(ticketId);
+            if (ticket != null && ticket.Status == TicketStatus.Resolved)
+            {
+                // Auto close when user confirms and rates
+                _ticketService.ChangeStatus(ticketId, TicketStatus.Closed, CurrentUserId, "Người dùng xác nhận kết quả và đánh giá dịch vụ");
+            }
+
             _ticketService.RateTicket(ticketId, CurrentUserId, stars, comment);
-            TempData["Success"] = "Cảm ơn bạn đã đánh giá!";
+            TempData["Success"] = "Cảm ơn bạn đã đánh giá chất lượng dịch vụ!";
             return RedirectToAction("Details", new { id = ticketId });
         }
 
         // GET: /Ticket/Edit/5
-        [Authorize(Roles = "Admin")]
+        [AuthorizeRoles("Manager")]
         public ActionResult Edit(int id)
         {
             var ticket = _unitOfWork.Tickets.GetById(id);
@@ -263,9 +313,11 @@ namespace HelpdeskSystem.Controllers
                 CategoryId = ticket.CategoryId,
                 PriorityId = ticket.PriorityId,
                 Categories = _unitOfWork.Categories.GetAll()
+                    .Where(c => c.IsActive || c.CategoryId == ticket.CategoryId)
                     .Select(c => new SelectListItem { Value = c.CategoryId.ToString(), Text = c.Name })
                     .ToList(),
                 Priorities = _unitOfWork.Priorities.GetAll()
+                    .OrderBy(p => p.Level)
                     .Select(p => new SelectListItem { Value = p.PriorityId.ToString(), Text = p.Name })
                     .ToList()
             };
@@ -275,7 +327,7 @@ namespace HelpdeskSystem.Controllers
         // POST: /Ticket/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [AuthorizeRoles("Manager")]
         public ActionResult Edit(TicketEditVM model)
         {
             if (ModelState.IsValid)
@@ -283,7 +335,6 @@ namespace HelpdeskSystem.Controllers
                 var ticket = _unitOfWork.Tickets.GetById(model.TicketId);
                 if (ticket == null) return HttpNotFound();
 
-                // Log changes
                 if (ticket.Title != model.Title)
                 {
                     _unitOfWork.TicketHistories.Add(new TicketHistory
@@ -329,10 +380,10 @@ namespace HelpdeskSystem.Controllers
                     });
                     ticket.PriorityId = model.PriorityId;
 
-                    // Recalculate SLA due date
                     var slaConfig = _unitOfWork.SLAConfigs.Find(s => s.PriorityId == model.PriorityId).FirstOrDefault();
                     if (slaConfig != null)
                     {
+                        ticket.ResponseDueDate = ticket.CreatedDate.AddHours(slaConfig.ResponseTimeHours);
                         ticket.SLADueDate = ticket.CreatedDate.AddHours(slaConfig.ResolutionTimeHours);
                         ticket.IsSLAViolated = DateTime.Now > ticket.SLADueDate;
                     }

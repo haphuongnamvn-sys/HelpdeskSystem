@@ -1,0 +1,422 @@
+@* Chatbot Widget *@
+<style>
+    .messenger-chat-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #1F5FBF;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(31, 95, 191, 0.25);
+        cursor: pointer;
+        z-index: 1050;
+        transition: transform 0.15s ease, background-color 0.15s ease;
+        border: none;
+        outline: none;
+    }
+    .messenger-chat-btn:hover {
+        transform: scale(1.05);
+        background: #174A96;
+        color: #ffffff;
+    }
+    .messenger-chat-btn .pulse-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 10px;
+        height: 10px;
+        background-color: #16A34A;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+    }
+
+    /* Cửa sổ chat dạng Messenger (Flat 1px border, 6px radius) */
+    .messenger-chat-window {
+        position: fixed;
+        bottom: 84px;
+        right: 24px;
+        width: 380px;
+        max-width: calc(100vw - 32px);
+        height: 520px;
+        max-height: calc(100vh - 110px);
+        background: #ffffff;
+        border-radius: 6px;
+        border: 1px solid #D9DEE5;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 1060;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    /* Header */
+    .messenger-header {
+        background: #1F5FBF;
+        color: #ffffff;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .messenger-header .bot-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        margin-right: 10px;
+    }
+    .messenger-header .bot-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .messenger-header .bot-status {
+        font-size: 0.75rem;
+        opacity: 0.85;
+    }
+
+    /* Chat Body */
+    .messenger-body {
+        flex: 1;
+        padding: 14px;
+        overflow-y: auto;
+        background: #F5F6F8;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Tin nhắn */
+    .msg-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+    .msg-row.user {
+        justify-content: flex-end;
+    }
+    .msg-row.bot {
+        justify-content: flex-start;
+    }
+    .msg-bubble {
+        max-width: 82%;
+        padding: 9px 13px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-word;
+        white-space: pre-line;
+    }
+    .msg-row.user .msg-bubble {
+        background: #1F5FBF;
+        color: #ffffff;
+    }
+    .msg-row.bot .msg-bubble {
+        background: #ffffff;
+        color: #1F2933;
+        border: 1px solid #D9DEE5;
+    }
+    .msg-bubble strong {
+        font-weight: 600;
+        color: inherit;
+    }
+    .msg-bubble a {
+        color: #1F5FBF;
+        font-weight: 500;
+        text-decoration: underline;
+    }
+
+    /* Gợi ý nhanh (Quick chips) */
+    .messenger-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .messenger-chip-btn {
+        background: #ffffff;
+        border: 1px solid #D9DEE5;
+        color: #1F2933;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .messenger-chip-btn:hover {
+        background: #EFF4FB;
+        border-color: #1F5FBF;
+        color: #1F5FBF;
+    }
+
+    /* Hiệu ứng 3 chấm đang xử lý */
+    .typing-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px;
+        background: #ffffff;
+        border: 1px solid #D9DEE5;
+        border-radius: 6px;
+        width: fit-content;
+    }
+    .typing-dots span {
+        width: 6px;
+        height: 6px;
+        background: #94a3b8;
+        border-radius: 50%;
+        animation: typingDot 1.4s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @@keyframes typingDot {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+        30% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    /* Footer */
+    .messenger-footer {
+        padding: 10px 12px;
+        background: #ffffff;
+        border-top: 1px solid #D9DEE5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .messenger-footer input {
+        flex: 1;
+        border: 1px solid #D9DEE5;
+        border-radius: 4px;
+        padding: 7px 12px;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.15s ease;
+    }
+    .messenger-footer input:focus {
+        border-color: #1F5FBF;
+    }
+    .messenger-send-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 4px;
+        background: #1F5FBF;
+        color: #ffffff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        flex-shrink: 0;
+    }
+    .messenger-send-btn:hover {
+        background: #174A96;
+    }
+</style>
+
+<button type="button" id="messengerChatBtn" class="messenger-chat-btn" onclick="toggleMessengerChat()" title="Hỏi đáp trợ lý ảo IT">
+    <i class="fas fa-comment-dots" id="messengerIconChat"></i>
+    <i class="fas fa-times d-none" id="messengerIconClose"></i>
+    <span class="pulse-badge"></span>
+</button>
+
+<div id="messengerChatWindow" class="messenger-chat-window">
+    <div class="messenger-header">
+        <div class="d-flex align-items-center">
+            <div class="bot-avatar">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div>
+                <div class="bot-title">Trợ lý ảo hỗ trợ kỹ thuật</div>
+                <div class="bot-status"><i class="fas fa-circle text-success me-1" style="font-size:6px;"></i>Trực tuyến</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-link text-white p-1" onclick="resetMessengerSession()" title="Làm mới cuộc trò chuyện">
+                <i class="fas fa-redo-alt small"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link text-white p-1" onclick="toggleMessengerChat()" title="Đóng">
+                <i class="fas fa-minus small"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Body tin nhắn -->
+    <div id="messengerChatBody" class="messenger-body">
+        <!-- Lời chào mở đầu -->
+        <div class="msg-row bot">
+            <div class="msg-bubble">
+                <div>Xin chào! Tôi là <strong>Trợ lý ảo IT Helpdesk</strong>. Tôi có thể hỗ trợ bạn:</div>
+                <div class="mt-1">&bull; Hướng dẫn tự xử lý lỗi (máy in, mạng Wi-Fi, email, mật khẩu)</div>
+                <div>&bull; Tra cứu thời hạn cam kết xử lý sự cố (SLA)</div>
+                <div>&bull; Kiểm tra tình trạng xử lý phiếu yêu cầu</div>
+
+                <div class="messenger-chips">
+                    <button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt('Lỗi máy in không in được')">Lỗi máy in</button>
+                    <button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt('Mạng Wi-Fi chập chờn')">Lỗi Wi-Fi</button>
+                    <button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt('Quy định thời hạn xử lý SLA')">Quy định SLA</button>
+                    <button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt('Kiểm tra phiếu của tôi')">Phiếu của tôi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer nhập liệu -->
+    <div class="messenger-footer">
+        <input type="text" id="messengerInput" placeholder="Nhập câu hỏi hỗ trợ..." autocomplete="off" />
+        <button type="button" id="messengerSendBtn" class="messenger-send-btn" onclick="submitMessengerChat()" title="Gửi câu hỏi">
+            <i class="fas fa-paper-plane" style="font-size:12px;"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    var messengerActiveSessionId = 0;
+
+    // Bật/tắt khung chat Messenger
+    function toggleMessengerChat() {
+        var win = document.getElementById('messengerChatWindow');
+        var iconChat = document.getElementById('messengerIconChat');
+        var iconClose = document.getElementById('messengerIconClose');
+        if (!win) return;
+
+        if (win.style.display === 'flex') {
+            win.style.display = 'none';
+            if (iconChat) iconChat.classList.remove('d-none');
+            if (iconClose) iconClose.classList.add('d-none');
+        } else {
+            win.style.display = 'flex';
+            if (iconChat) iconChat.classList.add('d-none');
+            if (iconClose) iconClose.classList.remove('d-none');
+            setTimeout(function () {
+                var input = document.getElementById('messengerInput');
+                if (input) input.focus();
+                scrollMessengerBottom();
+            }, 100);
+        }
+    }
+
+    // Cuộn xuống cuối khung chat
+    function scrollMessengerBottom() {
+        var body = document.getElementById('messengerChatBody');
+        if (body) body.scrollTop = body.scrollHeight;
+    }
+
+    // Định dạng Markdown đơn giản (in đậm, liên kết)
+    function formatMessengerText(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        var safe = div.innerHTML;
+        safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        safe = safe.replace(/\[(.+?)\]\((.+?)\)/g, "<a href='$2'>$1</a>");
+        return safe;
+    }
+
+    // Gửi câu hỏi nhanh từ chip
+    function sendMessengerPrompt(promptText) {
+        var input = document.getElementById('messengerInput');
+        if (input) {
+            input.value = promptText;
+            submitMessengerChat();
+        }
+    }
+
+    // Gửi tin nhắn đến server
+    function submitMessengerChat() {
+        var input = document.getElementById('messengerInput');
+        if (!input) return;
+        var q = input.value.trim();
+        if (!q) return;
+
+        input.value = '';
+        var body = document.getElementById('messengerChatBody');
+
+        // Thêm tin nhắn của User vào khung chat
+        var userRow = document.createElement('div');
+        userRow.className = 'msg-row user';
+        userRow.innerHTML = '<div class="msg-bubble">' + document.createTextNode(q).wholeText + '</div>';
+        body.appendChild(userRow);
+
+        // Hiển thị hiệu ứng 3 chấm đang gõ
+        var typingRow = document.createElement('div');
+        typingRow.className = 'msg-row bot typing-indicator-row';
+        typingRow.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        body.appendChild(typingRow);
+        scrollMessengerBottom();
+
+        // Gửi AJAX POST đến ChatbotController.Ask
+        $.ajax({
+            url: '@Url.Action("Ask", "Chatbot")',
+            type: 'POST',
+            data: {
+                sessionId: messengerActiveSessionId,
+                question: q
+            },
+            success: function (res) {
+                $('.typing-indicator-row').remove();
+
+                if (res && res.success) {
+                    messengerActiveSessionId = res.sessionId;
+                    var botRow = document.createElement('div');
+                    botRow.className = 'msg-row bot';
+                    botRow.innerHTML = '<div class="msg-bubble">' + formatMessengerText(res.answer) + '</div>';
+                    body.appendChild(botRow);
+                } else {
+                    var errRow = document.createElement('div');
+                    errRow.className = 'msg-row bot';
+                    errRow.innerHTML = '<div class="msg-bubble text-danger">' + (res.error || 'Có lỗi xảy ra, vui lòng thử lại.') + '</div>';
+                    body.appendChild(errRow);
+                }
+                scrollMessengerBottom();
+            },
+            error: function () {
+                $('.typing-indicator-row').remove();
+                var errRow = document.createElement('div');
+                errRow.className = 'msg-row bot';
+                errRow.innerHTML = '<div class="msg-bubble text-danger">Không thể kết nối đến máy chủ. Vui lòng thử lại sau.</div>';
+                body.appendChild(errRow);
+                scrollMessengerBottom();
+            }
+        });
+    }
+
+    // Bắt sự kiện phím Enter
+    $(document).ready(function () {
+        $('#messengerInput').on('keydown', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                submitMessengerChat();
+            }
+        });
+    });
+
+    // Làm mới phiên hội thoại
+    function resetMessengerSession() {
+        if (!confirm('Bạn có muốn bắt đầu phiên hỏi đáp mới không?')) return;
+        messengerActiveSessionId = 0;
+        var body = document.getElementById('messengerChatBody');
+        if (body) {
+            body.innerHTML = '<div class="msg-row bot">' +
+                '<div class="msg-bubble">' +
+                '<div>Đã làm mới phiên hỏi đáp. Bạn cần hỗ trợ vấn đề gì?</div>' +
+                '<div class="messenger-chips">' +
+                '<button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt(\'Lỗi máy in không in được\')">Lỗi máy in</button>' +
+                '<button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt(\'Mạng Wi-Fi chập chờn\')">Lỗi Wi-Fi</button>' +
+                '<button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt(\'Quy định thời hạn xử lý SLA\')">Quy định SLA</button>' +
+                '<button type="button" class="messenger-chip-btn" onclick="sendMessengerPrompt(\'Kiểm tra phiếu của tôi\')">Phiếu của tôi</button>' +
+                '</div></div></div>';
+        }
+    }
+</script>

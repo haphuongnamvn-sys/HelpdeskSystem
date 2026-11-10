@@ -1,69 +1,44 @@
-@model IEnumerable<HelpdeskSystem.Models.Domain.SLAConfig>
+﻿@model IEnumerable<HelpdeskSystem.Models.Domain.SLAConfig>
 
 @{
-    ViewBag.Title = "Cấu hình SLA";
+    ViewBag.Title = "Cấu hình cam kết SLA";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     var configs = Model.ToList();
 }
 
-@section Styles {
-    <style>
-        #slaTable thead th {
-            text-align: center !important;
-            white-space: nowrap !important;
-            font-size: 0.82rem !important;
-            font-weight: 700 !important;
-            color: #475569 !important;
-            background-color: #f8fafc !important;
-            border-bottom: 2px solid #e2e8f0 !important;
-            padding: 12px 14px !important;
-        }
-        #slaTable tbody td {
-            white-space: normal !important;
-            word-break: break-word !important;
-            vertical-align: middle !important;
-            padding: 12px 14px !important;
-        }
-        #slaTable tbody tr:hover {
-            background-color: #f8faff !important;
-        }
-    </style>
-}
-
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="mb-3">
-            <h1 class="m-0 fw-bold fs-4 text-dark">Cấu hình Cam kết SLA</h1>
-            <p class="text-muted small mb-0">Thiết lập thời gian tối đa để phản hồi và giải quyết sự cố theo từng cấp độ ưu tiên</p>
-        </div>
+<div class="container-fluid py-3 px-4">
+    
+    <div class="mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1">Cấu hình cam kết dịch vụ (SLA)</h1>
+        <p class="text-muted small mb-0">Thiết lập thời hạn tối đa phản hồi ban đầu và giải quyết hoàn tất sự cố theo từng mức ưu tiên.</p>
     </div>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                <div>@TempData["Success"]</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-            </div>
-        }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <div>@TempData["Success"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-                <span class="text-dark fw-bold">Định mức thời gian theo mức ưu tiên</span>
-                <span class="badge bg-light text-muted border">@configs.Count cấp độ</span>
-            </div>
+    
+    <div class="card mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-semibold text-dark">Định mức thời gian theo mức ưu tiên</span>
+            <span class="badge bg-light text-secondary border">@configs.Count cấp độ</span>
+        </div>
 
+        <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="slaTable">
                     <thead>
                         <tr>
-                            <th class="text-center text-nowrap" style="width: 25%;">MỨC ĐỘ ƯU TIÊN</th>
-                            <th class="text-center text-nowrap" style="width: 25%;">THỜI GIAN PHẢN HỒI</th>
-                            <th class="text-center text-nowrap" style="width: 25%;">THỜI GIAN GIẢI QUYẾT</th>
-                            <th class="text-center text-nowrap" style="width: 15%;">NGƯỠNG CẢNH BÁO</th>
-                            <th class="text-center text-nowrap" style="width: 10%;">THAO TÁC</th>
+                            <th style="width: 25%;" class="text-center">Mức độ ưu tiên</th>
+                            <th style="width: 25%;" class="text-center">Thời gian phản hồi</th>
+                            <th style="width: 25%;" class="text-center">Thời gian giải quyết</th>
+                            <th style="width: 15%;" class="text-center">Ngưỡng cảnh báo</th>
+                            <th style="width: 10%;" class="text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,32 +53,32 @@
                                         <input type="hidden" name="PriorityId" value="@config.PriorityId" />
                                         @if (config.Priority != null)
                                         {
-                                            <span class="badge" style="background-color: @config.Priority.ColorCode; color: white; padding: 6px 14px; font-size: 0.82rem; font-weight: 600;">
-                                                <i class="fas fa-flag me-1 small"></i> @config.Priority.Name
+                                            <span class="badge px-3 py-1 small fw-semibold" style="background-color: @config.Priority.ColorCode; color: white;">
+                                                @config.Priority.Name
                                             </span>
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <div class="input-group input-group-sm mx-auto" style="max-width: 130px;">
+                                        <div class="input-group input-group-sm mx-auto" style="max-width: 120px;">
                                             <input type="number" name="ResponseTimeHours" value="@config.ResponseTimeHours" class="form-control text-center fw-semibold" min="1" required />
                                             <span class="input-group-text bg-light text-muted">giờ</span>
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <div class="input-group input-group-sm mx-auto" style="max-width: 130px;">
+                                        <div class="input-group input-group-sm mx-auto" style="max-width: 120px;">
                                             <input type="number" name="ResolutionTimeHours" value="@config.ResolutionTimeHours" class="form-control text-center fw-semibold" min="1" required />
                                             <span class="input-group-text bg-light text-muted">giờ</span>
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <div class="input-group input-group-sm mx-auto" style="max-width: 110px;">
+                                        <div class="input-group input-group-sm mx-auto" style="max-width: 100px;">
                                             <input type="number" name="WarningThresholdPercent" value="@config.WarningThresholdPercent" class="form-control text-center fw-semibold" min="1" max="100" required />
                                             <span class="input-group-text bg-light text-muted">%</span>
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <button type="submit" class="btn btn-sm btn-primary px-3 py-1 rounded-2 shadow-none">
-                                            <i class="fas fa-check me-1 small"></i> Lưu
+                                        <button type="submit" class="btn btn-sm btn-outline-primary px-3">
+                                            <i class="fas fa-save me-1"></i> Lưu
                                         </button>
                                     </td>
                                 </tr>
@@ -112,11 +87,6 @@
                     </tbody>
                 </table>
             </div>
-            
-            <div class="card-footer bg-white border-top py-2 px-4 text-muted small">
-                <i class="fas fa-info-circle me-1 text-primary"></i>
-                Hệ thống sẽ tự động so sánh thời gian thực tế xử lý với định mức trên để xác định phiếu <strong>Đúng hạn</strong> hay <strong>Quá hạn</strong>.
-            </div>
         </div>
     </div>
-</section>
+</div>

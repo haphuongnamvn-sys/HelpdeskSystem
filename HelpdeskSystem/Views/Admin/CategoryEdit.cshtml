@@ -1,44 +1,82 @@
-@model HelpdeskSystem.Models.Domain.Category
+﻿@model HelpdeskSystem.Models.Domain.Category
 
 @{
-    ViewBag.Title = "Chỉnh sửa Danh mục";
+    ViewBag.Title = "Chỉnh sửa danh mục";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     var depts = ViewBag.Departments as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
 }
 
-<div class="container-fluid">
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Chỉnh sửa Danh mục: @Model.Name</h6>
+<div class="container-fluid py-3 px-4">
+    
+    <div class="mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1">Chỉnh sửa danh mục sự cố</h1>
+        <p class="text-muted small mb-0">Cập nhật tên danh mục, phòng ban phụ trách hoặc trạng thái sử dụng.</p>
+    </div>
+
+    
+    <div class="card bg-white border" style="border-color: #D9DEE5 !important; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+            <div>
+                <span class="fw-semibold text-dark">Thông tin danh mục sự cố</span>
+                <span class="text-muted small ms-2">(Các mục có dấu <span class="text-danger">*</span> là bắt buộc)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-secondary border font-monospace">Mã: #@Model.CategoryId</span>
+                <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">@(Model.IsActive ? "Đang kích hoạt" : "Tạm ngưng")</span>
+            </div>
         </div>
-        <div class="card-body">
-            @using (Html.BeginForm("CategoryEdit", "Admin", FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.CategoryId)
+
+        @using (Html.BeginForm("CategoryEdit", "Admin", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.CategoryId)
+
+            <div class="card-body p-4">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Name">
+                            Tên danh mục sự cố <span class="text-danger">*</span>
+                        </label>
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "required", placeholder = "Ví dụ: Phần cứng, Mạng & Internet..." })
+                        @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="DepartmentId">
+                            Phòng ban kỹ thuật phụ trách
+                        </label>
+                        @Html.DropDownListFor(m => m.DepartmentId, depts, "-- Chọn phòng ban --", new { @class = "form-select" })
+                        @Html.ValidationMessageFor(m => m.DepartmentId, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
 
                 <div class="mb-3">
-                    @Html.LabelFor(m => m.Name, "Tên danh mục", new { @class = "form-label fw-bold" })
-                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "required" })
-                    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+                    <label class="form-label small fw-semibold text-dark mb-1" for="Description">
+                        Mô tả chi tiết phạm vi sự cố
+                    </label>
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "4", placeholder = "Mô tả các vấn đề thường thuộc danh mục này..." })
+                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
                 </div>
 
-                <div class="mb-3">
-                    @Html.LabelFor(m => m.DepartmentId, "Phòng ban xử lý", new { @class = "form-label fw-bold" })
-                    @Html.DropDownListFor(m => m.DepartmentId, depts, "-- Chọn phòng ban --", new { @class = "form-select" })
-                    @Html.ValidationMessageFor(m => m.DepartmentId, "", new { @class = "text-danger" })
+                <div class="p-3 bg-light border rounded mb-2" style="border-color: #D9DEE5 !important;">
+                    <div class="form-check">
+                        @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input", id = "IsActiveCat" })
+                        <label class="form-check-label small fw-semibold text-dark" for="IsActiveCat">
+                            Danh mục đang kích hoạt sử dụng
+                        </label>
+                    </div>
+                    <div class="text-muted small ps-4 mt-1">Khi bỏ kích hoạt, danh mục này sẽ tạm ẩn khỏi danh sách lựa chọn khi nhân viên gửi phiếu yêu cầu hỗ trợ mới.</div>
                 </div>
+            </div>
 
-                <div class="mb-4">
-                    @Html.LabelFor(m => m.Description, "Mô tả", new { @class = "form-label fw-bold" })
-                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3" })
-                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
-                </div>
-
-                <div class="d-flex justify-content-end">
-                    <a href="@Url.Action("Categories", "Admin")" class="btn btn-secondary me-2">Hủy</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
-                </div>
-            }
-        </div>
+            <div class="card-footer bg-light px-4 py-3 border-top d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                <a href="@Url.Action("Categories", "Admin")" class="btn btn-outline-secondary px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                    <i class="fas fa-times me-1"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-primary px-4 fw-medium" style="background-color: #1F5FBF; border-color: #1F5FBF; border-radius: 6px;">
+                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                </button>
+            </div>
+        }
     </div>
 </div>

@@ -1,50 +1,63 @@
-// Notification Polling - Checks for unread notifications every 30 seconds
+// notification-polling.js
+// Chức năng: cứ 30 giây lại hỏi server xem có thông báo chưa đọc hay không,
+// sau đó cập nhật số trên chuông và danh sách thả xuống ở thanh menu (_LoginPartial.cshtml).
 $(document).ready(function () {
-    var pollInterval = 30000; // 30 seconds
+    var pollInterval = 30000; // 30 giây
 
+    // Các phần tử trên giao diện (id phải trùng với _LoginPartial.cshtml)
+    var $badge = $('#notificationCount');
+    var $list = $('#notificationList');
+
+    // Chuyển ký tự đặc biệt thành HTML an toàn để tránh lỗi hiển thị / XSS
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // Gọi server lấy thông báo chưa đọc và vẽ lại danh sách
     function loadNotifications() {
         $.ajax({
             url: '/Notification/GetUnread',
             type: 'GET',
             dataType: 'json',
             success: function (data) {
-                // Update badge count
-                var badge = $('#notification-count');
+                // 1. Cập nhật số lượng trên chuông
                 if (data.count > 0) {
-                    badge.text(data.count > 99 ? '99+' : data.count);
-                    badge.show();
+                    $badge.text(data.count > 99 ? '99+' : data.count).show();
                 } else {
-                    badge.hide();
+                    $badge.hide();
                 }
 
-                // Update dropdown list
-                var list = $('#notification-list');
-                list.empty();
+                // 2. Xóa các mục cũ (chỉ xóa mục động, giữ nguyên tiêu đề và chân danh sách)
+                $list.find('.notif-dynamic').remove();
 
+                // 3. Chèn mục mới ngay sau tiêu đề (phần tử <li> đầu tiên)
+                var $header = $list.children('li').first();
+                var html = '';
                 if (data.items.length === 0) {
-                    list.append('<li class="dropdown-item text-center text-muted">Không có thông báo mới</li>');
+                    html = '<li class="notif-dynamic"><span class="dropdown-item py-3 text-center text-muted small">Không có thông báo mới</span></li>';
                 } else {
                     $.each(data.items, function (i, item) {
-                        var html = '<li>' +
-                            '<a class="dropdown-item notification-item" href="javascript:void(0)" ' +
-                            'data-id="' + item.notificationId + '" data-url="' + (item.url || '') + '">' +
-                            '<div class="d-flex align-items-start">' +
-                            '<div class="flex-grow-1">' +
-                            '<h6 class="mb-1 small fw-bold">' + escapeHtml(item.title) + '</h6>' +
-                            '<p class="mb-1 small text-muted">' + escapeHtml(item.message) + '</p>' +
-                            '<small class="text-muted">' + item.timeAgo + '</small>' +
-                            '</div></div></a></li>';
-                        list.append(html);
+                        html += '<li class="notif-dynamic">' +
+                            '<a class="dropdown-item notification-item py-2" href="javascript:void(0)" ' +
+                            'data-id="' + item.notificationId + '" data-url="' + escapeHtml(item.url || '') + '">' +
+                            '<div class="small fw-bold">' + escapeHtml(item.title) + '</div>' +
+                            '<div class="small text-muted text-wrap">' + escapeHtml(item.message) + '</div>' +
+                            '</a></li>';
                     });
+                    html += '<li class="notif-dynamic"><a class="dropdown-item text-center small text-primary" href="/Notification">Xem tất cả thông báo</a></li>';
                 }
+                $header.after(html);
             },
             error: function () {
-                // Silently fail - don't disturb the user
+                // Lỗi mạng thì bỏ qua, không làm phiền người dùng
             }
         });
     }
 
-    // Click notification item → mark as read and navigate
+    // Bấm vào 1 thông báo: đánh dấu đã đọc rồi chuyển đến trang liên quan
     $(document).on('click', '.notification-item', function (e) {
         e.preventDefault();
         var id = $(this).data('id');
@@ -59,23 +72,7 @@ $(document).ready(function () {
         });
     });
 
-    // Mark all as read
-    $(document).on('click', '#mark-all-read', function (e) {
-        e.preventDefault();
-        $.post('/Notification/MarkAllAsRead', function () {
-            loadNotifications();
-        });
-    });
-
-    // Helper function to escape HTML
-    function escapeHtml(text) {
-        if (!text) return '';
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(text));
-        return div.innerHTML;
-    }
-
-    // Initial load and start polling
+    // Tải ngay khi mở trang, sau đó lặp lại theo chu kỳ
     loadNotifications();
     setInterval(loadNotifications, pollInterval);
 });

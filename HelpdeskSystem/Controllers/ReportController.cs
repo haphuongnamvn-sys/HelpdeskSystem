@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -12,7 +12,7 @@ using OfficeOpenXml;
 
 namespace HelpdeskSystem.Controllers
 {
-    [AuthorizeRoles("Admin")]
+    [AuthorizeRoles("Manager")]
     public class ReportController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

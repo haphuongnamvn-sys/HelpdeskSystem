@@ -21,7 +21,7 @@ namespace HelpdeskSystem.Migrations
         {
             // === Roles ===
             var roleManager = new RoleManager<IdentityRole>(new RoleStore<IdentityRole>(context));
-            string[] roleNames = { "Admin", "Technician", "EndUser" };
+            string[] roleNames = { "Admin", "Manager", "Technician", "EndUser" };
             foreach (var roleName in roleNames)
             {
                 if (!roleManager.RoleExists(roleName))
@@ -40,21 +40,21 @@ namespace HelpdeskSystem.Migrations
 
             // === Categories ===
             context.Categories.AddOrUpdate(c => c.CategoryId,
-                new Category { CategoryId = 1, Name = "Phần cứng", Description = "Hỗ trợ phần cứng", DepartmentId = 1 },
-                new Category { CategoryId = 2, Name = "Mạng & Internet", Description = "Hỗ trợ mạng", DepartmentId = 1 },
-                new Category { CategoryId = 3, Name = "Phần mềm văn phòng", Description = "Phần mềm VP", DepartmentId = 2 },
-                new Category { CategoryId = 4, Name = "Phần mềm nội bộ", Description = "Phần mềm nội bộ", DepartmentId = 2 },
-                new Category { CategoryId = 5, Name = "Tài khoản & Truy cập", Description = "Tài khoản", DepartmentId = 3 },
-                new Category { CategoryId = 6, Name = "Email & Liên lạc", Description = "Email", DepartmentId = 3 },
-                new Category { CategoryId = 7, Name = "Khác", Description = "Các yêu cầu khác", DepartmentId = null }
+                new Category { CategoryId = 1, Name = "Phần cứng", Description = "Hỗ trợ phần cứng", DepartmentId = 1, IsActive = true },
+                new Category { CategoryId = 2, Name = "Mạng & Internet", Description = "Hỗ trợ mạng", DepartmentId = 1, IsActive = true },
+                new Category { CategoryId = 3, Name = "Phần mềm văn phòng", Description = "Phần mềm VP", DepartmentId = 2, IsActive = true },
+                new Category { CategoryId = 4, Name = "Phần mềm nội bộ", Description = "Phần mềm nội bộ", DepartmentId = 2, IsActive = true },
+                new Category { CategoryId = 5, Name = "Tài khoản & Truy cập", Description = "Tài khoản", DepartmentId = 3, IsActive = true },
+                new Category { CategoryId = 6, Name = "Email & Liên lạc", Description = "Email", DepartmentId = 3, IsActive = true },
+                new Category { CategoryId = 7, Name = "Khác", Description = "Các yêu cầu khác", DepartmentId = null, IsActive = true }
             );
 
             // === Priorities ===
             context.Priorities.AddOrUpdate(p => p.PriorityId,
-                new Priority { PriorityId = 1, Name = "Critical", Level = 1, ColorCode = "#dc3545" },
-                new Priority { PriorityId = 2, Name = "High", Level = 2, ColorCode = "#fd7e14" },
-                new Priority { PriorityId = 3, Name = "Medium", Level = 3, ColorCode = "#ffc107" },
-                new Priority { PriorityId = 4, Name = "Low", Level = 4, ColorCode = "#28a745" }
+                new Priority { PriorityId = 1, Name = "Khẩn cấp", Level = 1, ColorCode = "#dc3545" },
+                new Priority { PriorityId = 2, Name = "Cao", Level = 2, ColorCode = "#fd7e14" },
+                new Priority { PriorityId = 3, Name = "Trung bình", Level = 3, ColorCode = "#ffc107" },
+                new Priority { PriorityId = 4, Name = "Thấp", Level = 4, ColorCode = "#28a745" }
             );
 
             // === SLA Configs ===
@@ -77,11 +77,12 @@ namespace HelpdeskSystem.Migrations
 
             var users = new[]
             {
-                new { Email = "admin@helpdesk.com", Password = "Admin@123", FullName = "Nguyễn Văn Admin", Role = "Admin", DeptId = (int?)null },
-                new { Email = "tech01@helpdesk.com", Password = "Tech@123", FullName = "Trần Văn Kỹ Thuật", Role = "Technician", DeptId = (int?)1 },
-                new { Email = "tech02@helpdesk.com", Password = "Tech@123", FullName = "Lê Thị Phần Mềm", Role = "Technician", DeptId = (int?)2 },
-                new { Email = "user01@helpdesk.com", Password = "User@123", FullName = "Phạm Văn Người Dùng", Role = "EndUser", DeptId = (int?)null },
-                new { Email = "user02@helpdesk.com", Password = "User@123", FullName = "Hoàng Thị Khách Hàng", Role = "EndUser", DeptId = (int?)null }
+                new { Email = "admin@helpdesk.com", Password = "Admin@123", FullName = "Nguyễn Văn Admin", Role = "Admin", DeptId = (int?)null, Position = "Quản trị viên hệ thống" },
+                new { Email = "manager@helpdesk.com", Password = "Manager@123", FullName = "Lê Quản Lý", Role = "Manager", DeptId = (int?)1, Position = "Trưởng bộ phận Hỗ trợ" },
+                new { Email = "tech01@helpdesk.com", Password = "Tech@123", FullName = "Trần Văn Kỹ Thuật", Role = "Technician", DeptId = (int?)1, Position = "Nhân viên kỹ thuật phần cứng & mạng" },
+                new { Email = "tech02@helpdesk.com", Password = "Tech@123", FullName = "Lê Thị Phần Mềm", Role = "Technician", DeptId = (int?)2, Position = "Nhân viên hỗ trợ phần mềm" },
+                new { Email = "user01@helpdesk.com", Password = "User@123", FullName = "Phạm Văn Người Dùng", Role = "EndUser", DeptId = (int?)null, Position = "Chuyên viên Kế toán" },
+                new { Email = "user02@helpdesk.com", Password = "User@123", FullName = "Hoàng Thị Khách Hàng", Role = "EndUser", DeptId = (int?)null, Position = "Chuyên viên Nhân sự" }
             };
 
             foreach (var u in users)
@@ -94,6 +95,8 @@ namespace HelpdeskSystem.Migrations
                         Email = u.Email,
                         FullName = u.FullName,
                         DepartmentId = u.DeptId,
+                        Position = u.Position,
+                        Address = "Hà Nội",
                         IsActive = true,
                         CreatedDate = DateTime.Now,
                         EmailConfirmed = true

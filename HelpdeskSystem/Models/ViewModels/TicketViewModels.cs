@@ -43,7 +43,9 @@ namespace HelpdeskSystem.Models.ViewModels
         public string TicketCode { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public int CategoryId { get; set; }
         public string CategoryName { get; set; }
+        public int PriorityId { get; set; }
         public string PriorityName { get; set; }
         public string PriorityColor { get; set; }
         public TicketStatus Status { get; set; }
@@ -55,15 +57,20 @@ namespace HelpdeskSystem.Models.ViewModels
         public string AssignedToId { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? AssignedDate { get; set; }
+        public DateTime? ReceivedDate { get; set; }
         public DateTime? ResolvedDate { get; set; }
         public DateTime? ClosedDate { get; set; }
+        public DateTime? ResponseDueDate { get; set; }
         public DateTime? SLADueDate { get; set; }
         public bool IsSLAViolated { get; set; }
         public string SLAStatusText { get; set; }
         public string SLAStatusColor { get; set; }
+        public string Solution { get; set; }
 
-        // For assignment dropdown (Admin only)
+        // For assignment dropdown (Manager / Admin)
         public IEnumerable<SelectListItem> Technicians { get; set; }
+        public IEnumerable<SelectListItem> Priorities { get; set; }
+        public IEnumerable<SelectListItem> Categories { get; set; }
         public string SelectedTechnicianId { get; set; }
 
         // Comments
@@ -86,6 +93,8 @@ namespace HelpdeskSystem.Models.ViewModels
         // Permissions
         public bool CanAssign { get; set; }
         public bool CanChangeStatus { get; set; }
+        public bool CanCancel { get; set; }
+        public bool CanConfirmResult { get; set; }
         public bool CanComment { get; set; }
         public bool CanAddInternalNote { get; set; }
         public List<TicketStatus> AllowedTransitions { get; set; }
@@ -123,6 +132,18 @@ namespace HelpdeskSystem.Models.ViewModels
         public string OldValue { get; set; }
         public string NewValue { get; set; }
         public DateTime ChangedDate { get; set; }
+
+        public string Action
+        {
+            get { return FieldChanged; }
+            set { FieldChanged = value; }
+        }
+
+        public string Note
+        {
+            get { return !string.IsNullOrEmpty(OldValue) ? $"{OldValue} → {NewValue}" : NewValue; }
+            set { NewValue = value; }
+        }
     }
 
     public class AttachmentItem
@@ -186,6 +207,12 @@ namespace HelpdeskSystem.Models.ViewModels
 
         [Display(Name = "Tìm kiếm")]
         public string SearchTerm { get; set; }
+
+        public string QuickFilter { get; set; }
+
+        public int Page { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalItems { get; set; } = 0;
 
         public IEnumerable<SelectListItem> Categories { get; set; }
         public IEnumerable<SelectListItem> Priorities { get; set; }

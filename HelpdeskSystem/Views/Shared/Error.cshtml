@@ -5,32 +5,38 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container text-center py-5">
+<div class="container-fluid py-5 px-4">
     <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card shadow-sm border-danger p-4">
-                <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
-                <h2 class="fw-bold text-danger">Rất tiếc! Đã có lỗi xảy ra</h2>
-                <p class="text-muted mt-2">
-                    Hệ thống gặp sự cố bất ngờ trong quá trình xử lý yêu cầu của bạn. Đội ngũ kỹ thuật đã được ghi nhận sự cố này.
+        <div class="col-lg-6 col-md-8">
+            <div class="card border bg-white text-center p-5" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+                <div class="mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-light text-secondary rounded-circle" style="width: 64px; height: 64px; border: 1px solid #D9DEE5;">
+                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                    </span>
+                </div>
+                
+                <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.08em;">Sự cố kỹ thuật 500</div>
+                <h1 class="h4 fw-bold text-dark mt-1 mb-2">Đã xảy ra lỗi trong quá trình xử lý</h1>
+                
+                <p class="text-muted small mb-4 mx-auto" style="max-width: 440px; line-height: 1.6;">
+                    Hệ thống gặp sự cố bất ngờ khi thực hiện yêu cầu. Đội ngũ quản trị đã ghi nhận nhật ký lỗi để tiến hành kiểm tra và khắc phục.
                 </p>
 
                 @if (Model != null && HttpContext.Current.IsDebuggingEnabled)
                 {
-                    <div class="text-start bg-light p-3 rounded mt-3 small text-danger font-monospace" style="max-height: 250px; overflow-y: auto;">
-                        <strong>Action:</strong> @Model.ActionName <br />
-                        <strong>Controller:</strong> @Model.ControllerName <br />
-                        <strong>Exception:</strong> @(Model.Exception != null ? Model.Exception.Message : "") <br />
-                        <hr />
-                        <pre>@(Model.Exception != null ? Model.Exception.StackTrace : "")</pre>
+                    <div class="text-start bg-light p-3 border rounded mb-4 small font-monospace text-dark" style="border-color: #D9DEE5 !important; max-height: 220px; overflow-y: auto;">
+                        <div><strong>Thao tác:</strong> @Model.ActionName / @Model.ControllerName</div>
+                        <div class="text-danger mt-1"><strong>Ngoại lệ:</strong> @(Model.Exception != null ? Model.Exception.Message : "")</div>
+                        <hr class="my-2" />
+                        <pre class="mb-0 small text-secondary">@(Model.Exception != null ? Model.Exception.StackTrace : "")</pre>
                     </div>
                 }
 
-                <div class="mt-4">
-                    <a href="~/" class="btn btn-primary me-2">
-                        <i class="fas fa-home me-1"></i> Quay về trang chủ
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <a href="~/" class="btn btn-primary px-4 fw-medium">
+                        <i class="fas fa-home me-1"></i> Quay về trang làm việc
                     </a>
-                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary px-3">
                         <i class="fas fa-arrow-left me-1"></i> Quay lại trang trước
                     </a>
                 </div>

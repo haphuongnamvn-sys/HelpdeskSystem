@@ -1,78 +1,97 @@
 @model HelpdeskSystem.Models.ViewModels.TicketEditVM
 
 @{
-    ViewBag.Title = "Chỉnh sửa phiếu - " + Model.TicketCode;
+    ViewBag.Title = "Chỉnh sửa phiếu #" + Model.TicketCode;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Chỉnh sửa phiếu @Model.TicketCode</h1>
+<div class="container-fluid py-3 px-4">
+    <div style="max-width: 1240px;">
+        
+        <div class="mb-3">
+            <h1 class="h4 fw-bold text-dark mb-1">Chỉnh sửa phiếu yêu cầu #@Model.TicketCode</h1>
+            <p class="text-muted small mb-0">Cập nhật lại tiêu đề, danh mục hoặc mức độ ưu tiên của phiếu hỗ trợ.</p>
+        </div>
+
+        <div class="card bg-white border" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                <div>
+                    <div class="fw-semibold text-dark">Thông tin cập nhật</div>
+                    <div class="text-muted small">Các trường đánh dấu (<span class="text-danger">*</span>) là bắt buộc</div>
+                </div>
+                <span class="badge bg-light text-secondary border font-monospace">#@Model.TicketCode</span>
             </div>
-            <div class="col-sm-6 text-end">
-                <a href="@Url.Action("Details", "Ticket", new { id = Model.TicketId })" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Trở lại
-                </a>
-            </div>
+            
+            @using (Html.BeginForm("Edit", "Ticket", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.TicketId)
+                @Html.HiddenFor(m => m.TicketCode)
+                
+                <div class="card-body p-4">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger small py-2 mb-3" })
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="ticketTitle">
+                            Tiêu đề sự cố <span class="text-danger">*</span>
+                        </label>
+                        @Html.TextBoxFor(m => m.Title, new { 
+                            @class = "form-control", 
+                            id = "ticketTitle", 
+                            placeholder = "Nhập tiêu đề sự cố...",
+                            maxlength = "200", 
+                            required = "required" 
+                        })
+                        <div class="form-text text-muted small">Tóm tắt ngắn gọn vấn đề để kỹ thuật viên nhận diện nhanh.</div>
+                        @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark mb-1" for="CategoryId">
+                                Danh mục sự cố <span class="text-danger">*</span>
+                            </label>
+                            @Html.DropDownListFor(m => m.CategoryId, Model.Categories ?? new List<SelectListItem>(), "-- Chọn danh mục --", new { @class = "form-select", id = "CategoryId", required = "required" })
+                            @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark mb-1" for="PriorityId">
+                                Mức độ ưu tiên <span class="text-danger">*</span>
+                            </label>
+                            @Html.DropDownListFor(m => m.PriorityId, Model.Priorities ?? new List<SelectListItem>(), "-- Chọn mức ưu tiên --", new { @class = "form-select", id = "PriorityId", required = "required" })
+                            @Html.ValidationMessageFor(m => m.PriorityId, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="ticketDescription">
+                            Mô tả chi tiết sự cố <span class="text-danger">*</span>
+                        </label>
+                        @Html.TextAreaFor(m => m.Description, new { 
+                            @class = "form-control", 
+                            rows = "6", 
+                            id = "ticketDescription", 
+                            placeholder = "Mô tả chi tiết lỗi...",
+                            required = "required" 
+                        })
+                        @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light px-4 py-3 border-top d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                    <a href="@Url.Action("Details", "Ticket", new { id = Model.TicketId })" class="btn btn-outline-secondary px-3">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium">
+                        <i class="fas fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-8 offset-md-2">
-                <div class="card card-warning">
-                    <div class="card-header">
-                        <h3 class="card-title">Cập nhật thông tin phiếu</h3>
-                    </div>
-                    
-                    @using (Html.BeginForm("Edit", "Ticket", FormMethod.Post))
-                    {
-                        @Html.AntiForgeryToken()
-                        @Html.HiddenFor(m => m.TicketId)
-                        @Html.HiddenFor(m => m.TicketCode)
-                        
-                        <div class="card-body">
-                            @Html.ValidationSummary(true, "", new { @class = "text-danger alert alert-danger" })
-
-                            <div class="mb-3">
-                                <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-                                @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
-                                @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Mô tả <span class="text-danger">*</span></label>
-                                @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "5" })
-                                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Danh mục <span class="text-danger">*</span></label>
-                                    @Html.DropDownListFor(m => m.CategoryId, Model.Categories ?? new List<SelectListItem>(), "-- Chọn danh mục --", new { @class = "form-select" })
-                                    @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger" })
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Mức ưu tiên <span class="text-danger">*</span></label>
-                                    @Html.DropDownListFor(m => m.PriorityId, Model.Priorities ?? new List<SelectListItem>(), "-- Chọn mức ưu tiên --", new { @class = "form-select" })
-                                    @Html.ValidationMessageFor(m => m.PriorityId, "", new { @class = "text-danger" })
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-save"></i> Lưu thay đổi
-                            </button>
-                            <a href="@Url.Action("Details", "Ticket", new { id = Model.TicketId })" class="btn btn-default float-right">Hủy</a>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

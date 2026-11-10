@@ -25,17 +25,29 @@ namespace HelpdeskSystem.Models.Domain
 
         public int ViewCount { get; set; }
 
+        [Display(Name = "Hiển thị")]
+        public bool IsVisible { get; set; }
+
+        public int HelpfulCount { get; set; }
+
+        public int NotHelpfulCount { get; set; }
+
         public DateTime CreatedDate { get; set; }
 
         public DateTime? UpdatedDate { get; set; }
 
         public virtual Category Category { get; set; }
         public virtual ApplicationUser CreatedBy { get; set; }
+        public virtual System.Collections.Generic.ICollection<ArticleRating> Ratings { get; set; }
 
         public KnowledgeBase()
         {
             ViewCount = 0;
+            IsVisible = true;
+            HelpfulCount = 0;
+            NotHelpfulCount = 0;
             CreatedDate = DateTime.Now;
+            Ratings = new System.Collections.Generic.HashSet<ArticleRating>();
         }
     }
 }

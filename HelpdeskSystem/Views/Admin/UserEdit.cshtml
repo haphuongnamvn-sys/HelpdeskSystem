@@ -1,62 +1,142 @@
-@model HelpdeskSystem.Models.ViewModels.UserManagementVM
-
+﻿@model HelpdeskSystem.Models.ViewModels.UserManagementVM
 @{
-    ViewBag.Title = "Chỉnh sửa Người Dùng";
+    ViewBag.Title = "Chỉnh sửa tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-fluid">
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Chỉnh sửa Người Dùng: @Model.FullName</h6>
+<div class="container-fluid py-3 px-4">
+    
+    <div class="mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1">Chỉnh sửa thông tin tài khoản</h1>
+        <p class="text-muted small mb-0">Cập nhật thông tin nhân sự, quyền hạn hoặc cấp lại mật khẩu cho @Model.FullName.</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3">
+            <i class="fas fa-check-circle me-2"></i>
+            <div>@TempData["Success"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
         </div>
-        <div class="card-body">
-            @using (Html.BeginForm("UserEdit", "Admin", FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.Id)
-                @Html.HiddenFor(m => m.Email)
+    }
 
-                <div class="row mb-3">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-3">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <div>@TempData["Error"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    
+    <div class="card bg-white border mb-4" style="border-color: #D9DEE5 !important; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+            <div>
+                <span class="fw-semibold text-dark">Thông tin tài khoản nhân sự</span>
+                <span class="text-muted small ms-2">(Các mục có dấu <span class="text-danger">*</span> là bắt buộc)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-secondary border font-monospace">@Model.Email</span>
+                <span class="badge bg-light text-primary border">@Model.RoleName</span>
+                <span class="badge @(Model.IsActive ? "bg-success" : "bg-secondary")">@(Model.IsActive ? "Đang hoạt động" : "Tạm khóa")</span>
+            </div>
+        </div>
+
+        @using (Html.BeginForm("UserEdit", "Admin", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+
+            <div class="card-body p-4">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        @Html.LabelFor(m => m.FullName, new { @class = "form-label fw-bold" })
+                        <label class="form-label small fw-semibold text-dark mb-1" for="FullName">Họ và tên <span class="text-danger">*</span></label>
                         @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", required = "required" })
-                        @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger" })
+                        @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6">
-                        @Html.LabelFor(m => m.Email, new { @class = "form-label fw-bold" })
-                        <input type="text" class="form-control" value="@Model.Email" disabled />
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        @Html.LabelFor(m => m.SelectedRole, new { @class = "form-label fw-bold" })
-                        @Html.DropDownListFor(m => m.SelectedRole, Model.Roles, new { @class = "form-select" })
-                        @Html.ValidationMessageFor(m => m.SelectedRole, "", new { @class = "text-danger" })
-                    </div>
-                    <div class="col-md-6">
-                        @Html.LabelFor(m => m.DepartmentId, new { @class = "form-label fw-bold" })
-                        @Html.DropDownListFor(m => m.DepartmentId, Model.Departments, "Chọn phòng ban...", new { @class = "form-select" })
-                        @Html.ValidationMessageFor(m => m.DepartmentId, "", new { @class = "text-danger" })
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Email">Địa chỉ email <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
                     </div>
                 </div>
 
-                <div class="row mb-4">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <div class="form-check form-switch mt-4">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="SelectedRole">Vai trò hệ thống <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.SelectedRole, Model.Roles ?? new List<SelectListItem>(), new { @class = "form-select", required = "required", name = "selectedRole" })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="DepartmentId">Phòng ban</label>
+                        @Html.DropDownListFor(m => m.DepartmentId, Model.Departments ?? new List<SelectListItem>(), "-- Chọn phòng ban --", new { @class = "form-select" })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="PhoneNumber">Số điện thoại</label>
+                        @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control", placeholder = "Số điện thoại liên hệ..." })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Position">Chức vụ / Vị trí công tác</label>
+                        @Html.TextBoxFor(m => m.Position, new { @class = "form-control", placeholder = "Chức vụ / Vị trí..." })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Address">Vị trí làm việc</label>
+                        @Html.TextBoxFor(m => m.Address, new { @class = "form-control", placeholder = "Ví dụ: Tầng 3, Tòa nhà Văn phòng..." })
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check form-switch pb-2">
                             @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input", id = "IsActiveCheck" })
-                            <label class="form-check-label fw-bold" for="IsActiveCheck">Trạng thái Hoạt động</label>
+                            <label class="form-check-label small fw-semibold text-dark" for="IsActiveCheck">
+                                Cho phép tài khoản hoạt động
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end">
-                    <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary me-2">Hủy</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top" style="border-color: #EDF0F2 !important;">
+                    <a href="@Url.Action("Users", "Admin")" class="btn btn-outline-secondary px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                        <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium" style="background-color: #1F5FBF; border-color: #1F5FBF; border-radius: 6px;">
+                        <i class="fas fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        }
+
+        
+        <div class="p-4 bg-light border-top" style="border-color: #D9DEE5 !important;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div>
+                    <span class="fw-semibold text-dark"><i class="fas fa-key text-warning me-2"></i>Cấp lại mật khẩu tài khoản</span>
+                    <span class="text-muted small ms-2">Sử dụng trong trường hợp người dùng quên mật khẩu đăng nhập hệ thống</span>
+                </div>
+            </div>
+            @using (Html.BeginForm("UserResetPassword", "Admin", FormMethod.Post, new { @class = "row g-2 align-items-center mt-1" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="col-auto">
+                    <label class="small fw-semibold text-dark mb-0">Mật khẩu mới khởi tạo:</label>
+                </div>
+                <div class="col-auto" style="width: 240px;">
+                    <input type="text" name="newPassword" class="form-control form-control-sm font-monospace" value="User@123" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-warning btn-sm px-3 fw-medium" onclick="return confirm('Xác nhận đặt lại mật khẩu cho tài khoản @Model.FullName?');">
+                        <i class="fas fa-redo me-1"></i> Đặt lại mật khẩu
+                    </button>
+                </div>
+                <div class="col-12">
+                    <div class="form-text text-muted small mt-0">Mật khẩu mẫu mặc định: <code>User@123</code>. Sau khi nhận, người dùng cần đổi lại mật khẩu cá nhân.</div>
                 </div>
             }
         </div>
     </div>
 </div>
-
-

@@ -1,0 +1,125 @@
+@using Microsoft.AspNet.Identity
+@{
+    string controller = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string action = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    bool isAdmin = User.IsInRole("Admin");
+    bool isManager = User.IsInRole("Manager");
+    bool isTech = User.IsInRole("Technician");
+    bool isUser = !isAdmin && !isManager && !isTech;
+}
+
+<ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 align-items-lg-center">
+    @* 1. QUẢN TRỊ VIÊN (ADMIN) *@
+    @if (isAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Admin" && action.StartsWith("User") ? "active" : "")" href="@Url.Action("Users", "Admin")">
+                <i class="fas fa-users-cog"></i> Quản lý tài khoản
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Admin" && action.StartsWith("Department") ? "active" : "")" href="@Url.Action("Departments", "Admin")">
+                <i class="fas fa-sitemap"></i> Quản lý phòng ban
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Admin" && action.StartsWith("Category") ? "active" : "")" href="@Url.Action("Categories", "Admin")">
+                <i class="fas fa-tags"></i> Danh mục sự cố
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Admin" && action == "SLAConfig" ? "active" : "")" href="@Url.Action("SLAConfig", "Admin")">
+                <i class="fas fa-stopwatch"></i> Thiết lập SLA
+            </a>
+        </li>
+    }
+
+    @* 2. QUẢN LÝ (MANAGER) *@
+    @if (isManager)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Ticket" ? "active" : "")" href="@Url.Action("Index", "Ticket")">
+                <i class="fas fa-ticket-alt"></i> Quản lý phiếu
+            </a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle @(controller == "KnowledgeBase" ? "active" : "")" href="#" id="kbDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-book-open"></i> Cơ sở tri thức
+            </a>
+            <ul class="dropdown-menu border" aria-labelledby="kbDropdown" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Index", "KnowledgeBase")">
+                        <i class="fas fa-search me-2 text-primary"></i> Tra cứu tri thức
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Manage", "KnowledgeBase")">
+                        <i class="fas fa-tasks me-2 text-secondary"></i> Quản lý bài viết
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Create", "KnowledgeBase")">
+                        <i class="fas fa-plus-circle me-2 text-success"></i> Viết bài mới
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Report" ? "active" : "")" href="@Url.Action("Index", "Report")">
+                <i class="fas fa-chart-line"></i> Báo cáo thống kê
+            </a>
+        </li>
+    }
+
+    @* 3. NHÂN VIÊN PHỤ TRÁCH (TECHNICIAN) *@
+    @if (isTech)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Ticket" ? "active" : "")" href="@Url.Action("Index", "Ticket")">
+                <i class="fas fa-tasks"></i> Phiếu được giao
+            </a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle @(controller == "KnowledgeBase" ? "active" : "")" href="#" id="kbDropdownTech" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-book-open"></i> Cơ sở tri thức
+            </a>
+            <ul class="dropdown-menu border" aria-labelledby="kbDropdownTech" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Index", "KnowledgeBase")">
+                        <i class="fas fa-search me-2 text-primary"></i> Tra cứu tri thức
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Manage", "KnowledgeBase")">
+                        <i class="fas fa-tasks me-2 text-secondary"></i> Quản lý bài viết
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 small" href="@Url.Action("Create", "KnowledgeBase")">
+                        <i class="fas fa-plus-circle me-2 text-success"></i> Viết bài mới
+                    </a>
+                </li>
+            </ul>
+        </li>
+    }
+
+    @* 4. NGƯỜI DÙNG (END USER) *@
+    @if (isUser && Request.IsAuthenticated)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Ticket" && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Ticket")">
+                <i class="fas fa-ticket-alt"></i> Phiếu của tôi
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "Ticket" && action == "Create" ? "active" : "") text-primary fw-semibold" href="@Url.Action("Create", "Ticket")">
+                <i class="fas fa-plus-circle"></i> Gửi yêu cầu mới
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(controller == "KnowledgeBase" ? "active" : "")" href="@Url.Action("Index", "KnowledgeBase")">
+                <i class="fas fa-book-open"></i> Cơ sở tri thức
+            </a>
+        </li>
+    }
+</ul>

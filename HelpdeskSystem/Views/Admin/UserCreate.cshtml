@@ -1,0 +1,93 @@
+﻿@model HelpdeskSystem.Models.ViewModels.UserCreateVM
+@{
+    ViewBag.Title = "Thêm tài khoản mới";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-3 px-4">
+    
+    <div class="mb-3">
+        <h1 class="h4 fw-bold text-dark mb-1">Thêm tài khoản người dùng</h1>
+        <p class="text-muted small mb-0">Tạo tài khoản nhân viên mới và thiết lập vai trò phân quyền hệ thống.</p>
+    </div>
+
+    
+    <div class="card bg-white border mb-4" style="border-color: #D9DEE5 !important; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #D9DEE5 !important;">
+            <div>
+                <span class="fw-semibold text-dark">Thông tin tài khoản mới</span>
+                <span class="text-muted small ms-2">(Các mục có dấu <span class="text-danger">*</span> là bắt buộc)</span>
+            </div>
+            <span class="badge bg-light text-secondary border">Tài khoản mới</span>
+        </div>
+
+        @using (Html.BeginForm("UserCreate", "Admin", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="card-body p-4">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="FullName">Họ và tên <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", placeholder = "Ví dụ: Nguyễn Văn A", required = "required" })
+                        @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Email">Địa chỉ email đăng nhập <span class="text-danger">*</span></label>
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", placeholder = "user@company.com", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Password">Mật khẩu khởi tạo <span class="text-danger">*</span></label>
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Tối thiểu 6 ký tự", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="SelectedRole">Vai trò hệ thống <span class="text-danger">*</span></label>
+                        @Html.DropDownListFor(m => m.SelectedRole, Model.Roles ?? new List<SelectListItem>(), "-- Chọn vai trò --", new { @class = "form-select", required = "required" })
+                        @Html.ValidationMessageFor(m => m.SelectedRole, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="DepartmentId">Phòng ban</label>
+                        @Html.DropDownListFor(m => m.DepartmentId, Model.Departments ?? new List<SelectListItem>(), "-- Chọn phòng ban --", new { @class = "form-select" })
+                        @Html.ValidationMessageFor(m => m.DepartmentId, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="PhoneNumber">Số điện thoại</label>
+                        @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control", placeholder = "0912 345 678" })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Position">Chức vụ</label>
+                        @Html.TextBoxFor(m => m.Position, new { @class = "form-control", placeholder = "Ví dụ: Kế toán viên, Lập trình viên..." })
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1" for="Address">Vị trí chỗ ngồi</label>
+                        @Html.TextBoxFor(m => m.Address, new { @class = "form-control", placeholder = "Ví dụ: Tầng 3, Tòa nhà A" })
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top" style="border-color: #EDF0F2 !important;">
+                    <a href="@Url.Action("Users", "Admin")" class="btn btn-outline-secondary px-3" style="border-radius: 6px; border-color: #D9DEE5;">
+                        <i class="fas fa-times me-1"></i> Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium" style="background-color: #1F5FBF; border-color: #1F5FBF; border-radius: 6px;">
+                        <i class="fas fa-save me-1"></i> Tạo tài khoản
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,147 +1,193 @@
 @model HelpdeskSystem.Models.ViewModels.TicketCreateVM
 
 @{
-    ViewBag.Title = "Gửi yêu cầu hỗ trợ mới";
+    ViewBag.Title = "Tạo phiếu yêu cầu hỗ trợ";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row align-items-center mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0 d-flex align-items-center gap-2">
-                    <span class="badge bg-primary-soft text-primary p-2 rounded-3"><i class="fas fa-plus-circle"></i></span>
-                    <span>Gửi Yêu Cầu Hỗ Trợ Mới</span>
-                </h1>
-                <p class="text-muted small mt-1 mb-0">Điền thông tin sự cố kỹ thuật bên dưới để đội ngũ kỹ thuật viên tiếp nhận và xử lý nhanh chóng.</p>
+<div class="container-fluid py-3 px-4">
+    <div style="max-width: 1240px;">
+        
+        <div class="mb-3">
+            <h1 class="h4 fw-bold text-dark mb-1">Tạo phiếu yêu cầu hỗ trợ</h1>
+            <p class="text-muted small mb-0">Điền thông tin sự cố kỹ thuật bên dưới để bộ phận IT tiếp nhận và xử lý.</p>
+        </div>
+
+        <div class="card border bg-white" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                <div>
+                    <div class="fw-semibold text-dark">Thông tin phiếu yêu cầu</div>
+                    <div class="text-muted small">Các mục có dấu (<span class="text-danger">*</span>) là bắt buộc</div>
+                </div>
+                <span class="badge bg-light text-secondary border px-2 py-1">Helpdesk Ticket</span>
             </div>
-            <div class="col-sm-6 text-end">
-                <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
-                </a>
-            </div>
+
+            @using (Html.BeginForm("Create", "Ticket", FormMethod.Post, new { enctype = "multipart/form-data", id = "createTicketForm" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="card-body p-4">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger small py-2 mb-3" })
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small mb-1" for="ticketTitle">
+                            Tiêu đề sự cố <span class="text-danger">*</span>
+                        </label>
+                        @Html.TextBoxFor(m => m.Title, new { 
+                            @class = "form-control", 
+                            placeholder = "Ví dụ: Máy in phòng Kế toán không in được, Mất kết nối mạng Wi-Fi...", 
+                            id = "ticketTitle", 
+                            maxlength = "200",
+                            required = "required" 
+                        })
+                        <div class="form-text text-muted small">Tóm tắt ngắn gọn vấn đề để kỹ thuật viên nhận diện nhanh.</div>
+                        @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small mb-1" for="CategoryId">
+                                Danh mục sự cố <span class="text-danger">*</span>
+                            </label>
+                            @Html.DropDownListFor(m => m.CategoryId, Model.Categories ?? new List<SelectListItem>(), "-- Chọn danh mục sự cố --", new { @class = "form-select", id = "CategoryId", required = "required" })
+                            <div class="form-text text-muted small">Phân loại để điều phối đúng kỹ thuật viên phụ trách.</div>
+                            @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger small" })
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark small mb-1" for="PriorityId">
+                                Mức độ ưu tiên <span class="text-danger">*</span>
+                            </label>
+                            @Html.DropDownListFor(m => m.PriorityId, Model.Priorities ?? new List<SelectListItem>(), "-- Chọn mức độ ưu tiên --", new { @class = "form-select", id = "PriorityId", required = "required" })
+                            <div class="form-text text-muted small">Mức độ khẩn cấp theo thỏa thuận cam kết dịch vụ (SLA).</div>
+                            @Html.ValidationMessageFor(m => m.PriorityId, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small mb-1" for="ticketDescription">
+                            Mô tả chi tiết sự cố <span class="text-danger">*</span>
+                        </label>
+                        @Html.TextAreaFor(m => m.Description, new { 
+                            @class = "form-control", 
+                            rows = "5", 
+                            id = "ticketDescription",
+                            placeholder = "Mô tả chi tiết: Thời điểm xảy ra lỗi, các bước thực hiện dẫn đến sự cố, mã hoặc thông báo lỗi hiển thị trên màn hình, vị trí bàn làm việc...", 
+                            required = "required" 
+                        })
+                        @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold text-dark small mb-1" for="Attachments">
+                            Tệp tài liệu hoặc ảnh chụp màn hình lỗi
+                        </label>
+                        <input type="file" name="Attachments" id="Attachments" class="form-control" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.zip" />
+                        <div class="form-text text-muted small">
+                            Định dạng hỗ trợ: JPG, PNG, PDF, Word, Excel, ZIP &bull; Tối đa 3 tệp, dung lượng tối đa 5MB mỗi tệp.
+                        </div>
+                        <div id="fileError" class="alert alert-danger small py-2 mt-2 d-none" role="alert"></div>
+                        <div id="filePreview" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light px-4 py-3 border-top d-flex align-items-center justify-content-between" style="border-color: #D9DEE5 !important;">
+                    <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-secondary px-3">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium" id="btnSubmitTicket">
+                        <i class="fas fa-paper-plane me-1"></i> Gửi yêu cầu
+                    </button>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-lg-9 col-xl-8">
-                <div class="card shadow-sm border-0 mb-5">
-                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary text-white p-2 rounded-circle"><i class="fas fa-file-alt"></i></span>
-                            <div>
-                                <h6 class="m-0 fw-bold text-dark">Biểu mẫu yêu cầu hỗ trợ</h6>
-                                <small class="text-muted">Các mục có dấu (<span class="text-danger">*</span>) là bắt buộc</small>
-                            </div>
-                        </div>
-                        <span class="badge bg-light text-primary border"><i class="fas fa-shield-alt me-1"></i>Bảo mật thông tin</span>
-                    </div>
-                    
-                    @using (Html.BeginForm("Create", "Ticket", FormMethod.Post, new { enctype = "multipart/form-data" }))
-                    {
-                        @Html.AntiForgeryToken()
-                        
-                        <div class="card-body p-4">
-                            @Html.ValidationSummary(true, "", new { @class = "text-danger alert alert-danger border-0 shadow-sm mb-4" })
-
-                            <!-- Tiêu đề sự cố -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold" for="ticketTitle">
-                                    <i class="fas fa-heading text-primary me-1"></i> Tiêu đề sự cố <span class="text-danger">*</span>
-                                </label>
-                                @Html.TextBoxFor(m => m.Title, new { 
-                                    @class = "form-control form-control-lg", 
-                                    placeholder = "Tóm tắt ngắn gọn vấn đề (Ví dụ: Máy in phòng Kế toán không in được, Lỗi Wi-Fi...)", 
-                                    id = "ticketTitle", 
-                                    required = "required" 
-                                })
-                                <div class="form-text text-muted small mt-1">Một tiêu đề rõ ràng giúp kỹ thuật viên nhận diện vấn đề nhanh hơn.</div>
-                                @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
-                            </div>
-
-                            <!-- Danh mục và Mức ưu tiên -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-tags text-warning me-1"></i> Danh mục sự cố <span class="text-danger">*</span>
-                                    </label>
-                                    @Html.DropDownListFor(m => m.CategoryId, Model.Categories ?? new List<SelectListItem>(), "-- Chọn danh mục liên quan --", new { @class = "form-select", required = "required" })
-                                    <div class="form-text text-muted small mt-1">Chọn nhóm chuyên môn phù hợp để phân phối đúng KTV.</div>
-                                    @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger small" })
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-flag text-danger me-1"></i> Mức độ khẩn cấp <span class="text-danger">*</span>
-                                    </label>
-                                    @Html.DropDownListFor(m => m.PriorityId, Model.Priorities ?? new List<SelectListItem>(), "-- Chọn mức độ ảnh hưởng --", new { @class = "form-select", required = "required" })
-                                    <div class="form-text text-muted small mt-1">Thời gian cam kết xử lý (SLA) phụ thuộc vào mức ưu tiên này.</div>
-                                    @Html.ValidationMessageFor(m => m.PriorityId, "", new { @class = "text-danger small" })
-                                </div>
-                            </div>
-
-                            <!-- Mô tả chi tiết -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-align-left text-primary me-1"></i> Mô tả chi tiết sự cố <span class="text-danger">*</span>
-                                </label>
-                                @Html.TextAreaFor(m => m.Description, new { 
-                                    @class = "form-control", 
-                                    rows = "6", 
-                                    placeholder = "Vui lòng mô tả chi tiết: hiện tượng xảy ra khi nào, các bước dẫn đến lỗi, mã hoặc thông báo lỗi hiển thị trên màn hình, vị trí phòng ban/thiết bị...", 
-                                    required = "required" 
-                                })
-                                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
-                            </div>
-
-                            <!-- Tệp đính kèm -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-paperclip text-primary me-1"></i> Tệp tài liệu / Ảnh chụp màn hình lỗi
-                                </label>
-                                <div class="p-3 bg-light rounded-3 border border-dashed text-center">
-                                    <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2 d-block"></i>
-                                    <input type="file" class="form-control" name="Attachments" id="Attachments" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.zip" />
-                                    <div class="form-text text-muted small mt-2">
-                                        <i class="fas fa-info-circle me-1"></i>Hỗ trợ: Ảnh (JPG, PNG), Tài liệu (PDF, Word, Excel, ZIP). Tối đa 10MB/tệp.
-                                    </div>
-                                    <div id="filePreview" class="mt-2 small fw-semibold text-primary"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center border-top">
-                            <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-secondary px-4">
-                                <i class="fas fa-times me-1"></i> Hủy bỏ
-                            </a>
-                            <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
-                                <i class="fas fa-paper-plane me-2"></i> Gửi phiếu yêu cầu
-                            </button>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 @section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
     <script>
         $(document).ready(function () {
-            // Display selected file names
-            $('#Attachments').on('change', function () {
-                var files = $(this)[0].files;
-                if (files.length > 0) {
-                    var names = [];
-                    for (var i = 0; i < files.length; i++) {
-                        names.push('<i class="fas fa-check-circle text-success me-1"></i>' + files[i].name);
-                    }
-                    $('#filePreview').html('Đã chọn ' + files.length + ' tệp:<br>' + names.join('<br>'));
-                } else {
-                    $('#filePreview').empty();
+            var selectedFilesDT = new DataTransfer();
+
+            function updateFileInputAndPreview() {
+                var input = document.getElementById('Attachments');
+                input.files = selectedFilesDT.files;
+                if (selectedFilesDT.files.length === 0) {
+                    input.value = '';
                 }
+
+                var $preview = $('#filePreview');
+                $preview.empty();
+
+                if (selectedFilesDT.files.length === 0) {
+                    return;
+                }
+
+                var html = '<div class="small fw-semibold text-muted mb-2">Đã chọn ' + selectedFilesDT.files.length + ' tệp:</div>' +
+                           '<div class="d-flex flex-wrap gap-2">';
+
+                for (var i = 0; i < selectedFilesDT.files.length; i++) {
+                    var file = selectedFilesDT.files[i];
+                    var sizeKb = Math.round(file.size / 1024);
+                    html += '<div class="d-inline-flex align-items-center bg-light border rounded px-3 py-1 gap-2" style="border-color: #D9DEE5 !important;">' +
+                                '<i class="fas fa-paperclip text-primary"></i>' +
+                                '<span class="small fw-medium text-dark text-truncate" style="max-width: 320px;" title="' + file.name + '">' + file.name + '</span>' +
+                                '<span class="text-muted small">(' + sizeKb + ' KB)</span>' +
+                                '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-remove-file ms-1" data-index="' + i + '" title="Bỏ chọn tệp này" style="font-size: 11px; line-height: 1.6; border-radius: 4px;">' +
+                                    '<i class="fas fa-times"></i>' +
+                                '</button>' +
+                            '</div>';
+                }
+                html += '</div>';
+                $preview.html(html);
+            }
+
+             từ dialog
+            $('#Attachments').on('change', function () {
+                var files = this.files;
+                var $errorBox = $('#fileError');
+                $errorBox.addClass('d-none').text('');
+
+                if (!files || files.length === 0) return;
+
+                var maxBytes = 5 * 1024 * 1024; // 5MB
+                var newDT = new DataTransfer();
+
+                for (var i = 0; i < files.length; i++) {
+                    if (files[i].size > maxBytes) {
+                        $errorBox.removeClass('d-none').text('Tệp "' + files[i].name + '" vượt quá dung lượng 5MB. Vui lòng nén nhỏ hoặc chọn tệp khác.');
+                        this.files = selectedFilesDT.files;
+                        return;
+                    }
+                    newDT.items.add(files[i]);
+                }
+
+                if (newDT.files.length > 3) {
+                    $errorBox.removeClass('d-none').text('Bạn chỉ được chọn tối đa 3 tệp đính kèm. Vui lòng chọn lại.');
+                    this.files = selectedFilesDT.files;
+                    return;
+                }
+
+                selectedFilesDT = newDT;
+                updateFileInputAndPreview();
+            });
+
+            // Khi bấm nút "Xóa" (dấu x) của một tệp cụ thể
+            $(document).on('click', '.btn-remove-file', function (e) {
+                e.preventDefault();
+                var removeIndex = parseInt($(this).data('index'));
+                var newDT = new DataTransfer();
+
+                for (var i = 0; i < selectedFilesDT.files.length; i++) {
+                    if (i !== removeIndex) {
+                        newDT.items.add(selectedFilesDT.files[i]);
+                    }
+                }
+
+                selectedFilesDT = newDT;
+                updateFileInputAndPreview();
+                $('#fileError').addClass('d-none').text('');
             });
         });
     </script>

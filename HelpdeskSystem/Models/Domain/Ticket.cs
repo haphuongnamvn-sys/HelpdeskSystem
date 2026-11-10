@@ -40,15 +40,22 @@ namespace HelpdeskSystem.Models.Domain
 
         public DateTime? AssignedDate { get; set; }
 
+        public DateTime? ReceivedDate { get; set; }
+
         public DateTime? FirstResponseDate { get; set; }
 
         public DateTime? ResolvedDate { get; set; }
 
         public DateTime? ClosedDate { get; set; }
 
+        public DateTime? ResponseDueDate { get; set; }
+
         public DateTime? SLADueDate { get; set; }
 
         public bool IsSLAViolated { get; set; }
+
+        [Display(Name = "Giải pháp xử lý")]
+        public string Solution { get; set; }
 
         public virtual Category Category { get; set; }
         public virtual Priority Priority { get; set; }

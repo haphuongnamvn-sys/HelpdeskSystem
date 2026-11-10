@@ -39,7 +39,7 @@ namespace HelpdeskSystem.Controllers
         }
 
         // ============================
-        // USER MANAGEMENT
+        // USER MANAGEMENT (UC11 - 2.5.7)
         // ============================
 
         public ActionResult Users()
@@ -58,6 +58,8 @@ namespace HelpdeskSystem.Controllers
                     Id = user.Id,
                     FullName = user.FullName,
                     Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    Position = user.Position,
                     DepartmentName = user.Department?.Name ?? "N/A",
                     RoleName = roles.FirstOrDefault() ?? "N/A",
                     IsActive = user.IsActive,
@@ -66,6 +68,81 @@ namespace HelpdeskSystem.Controllers
             }
 
             return View(userVMs);
+        }
+
+        // GET: /Admin/UserCreate
+        public ActionResult UserCreate()
+        {
+            var vm = new UserCreateVM
+            {
+                SelectedRole = "EndUser",
+                Roles = RoleManager.Roles.OrderBy(r => r.Name).Select(r => new SelectListItem
+                {
+                    Value = r.Name,
+                    Text = r.Name
+                }).ToList(),
+                Departments = _unitOfWork.Departments.GetAll()
+                    .Where(d => d.IsActive)
+                    .Select(d => new SelectListItem
+                    {
+                        Value = d.DepartmentId.ToString(),
+                        Text = d.Name
+                    }).ToList()
+            };
+            return View(vm);
+        }
+
+        // POST: /Admin/UserCreate
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> UserCreate(UserCreateVM model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email.Trim(),
+                    Email = model.Email.Trim(),
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber,
+                    Position = model.Position,
+                    Address = model.Address,
+                    DepartmentId = model.DepartmentId,
+                    IsActive = true,
+                    CreatedDate = DateTime.Now,
+                    EmailConfirmed = true
+                };
+
+                var result = await UserManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    if (!string.IsNullOrEmpty(model.SelectedRole))
+                    {
+                        await UserManager.AddToRoleAsync(user.Id, model.SelectedRole);
+                    }
+                    TempData["Success"] = $"Đã tạo tài khoản '{model.FullName}' thành công!";
+                    return RedirectToAction("Users");
+                }
+
+                TempData["Error"] = "Không thể tạo tài khoản: " + string.Join(", ", result.Errors);
+            }
+
+            model.Roles = RoleManager.Roles.OrderBy(r => r.Name).Select(r => new SelectListItem
+            {
+                Value = r.Name,
+                Text = r.Name,
+                Selected = r.Name == model.SelectedRole
+            }).ToList();
+            model.Departments = _unitOfWork.Departments.GetAll()
+                .Where(d => d.IsActive)
+                .Select(d => new SelectListItem
+                {
+                    Value = d.DepartmentId.ToString(),
+                    Text = d.Name,
+                    Selected = d.DepartmentId == model.DepartmentId
+                }).ToList();
+
+            return View(model);
         }
 
         public ActionResult UserEdit(string id)
@@ -103,6 +180,9 @@ namespace HelpdeskSystem.Controllers
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Position = user.Position,
+                Address = user.Address,
                 DepartmentId = user.DepartmentId,
                 DepartmentName = user.Department?.Name,
                 RoleName = roles.FirstOrDefault(),
@@ -125,13 +205,15 @@ namespace HelpdeskSystem.Controllers
 
             user.FullName = model.FullName;
             user.Email = model.Email;
+            user.PhoneNumber = model.PhoneNumber;
+            user.Position = model.Position;
+            user.Address = model.Address;
             user.DepartmentId = model.DepartmentId;
             user.IsActive = model.IsActive;
 
             var result = await UserManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                // Update role
                 var currentRoles = await UserManager.GetRolesAsync(user.Id);
                 if (!string.IsNullOrEmpty(selectedRole) && !currentRoles.Contains(selectedRole))
                 {
@@ -139,7 +221,7 @@ namespace HelpdeskSystem.Controllers
                     await UserManager.AddToRoleAsync(user.Id, selectedRole);
                 }
 
-                TempData["Success"] = "Cập nhật người dùng thành công!";
+                TempData["Success"] = "Cập nhật thông tin tài khoản và phân quyền thành công!";
                 return RedirectToAction("Users");
             }
 
@@ -147,8 +229,77 @@ namespace HelpdeskSystem.Controllers
             return RedirectToAction("UserEdit", new { id = model.Id });
         }
 
+        // POST: /Admin/UserResetPassword (UC11 - Cấp lại mật khẩu)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> UserResetPassword(string id, string newPassword)
+        {
+            var user = await UserManager.FindByIdAsync(id);
+            if (user == null) return HttpNotFound();
+
+            string pwd = string.IsNullOrWhiteSpace(newPassword) ? "User@123" : newPassword.Trim();
+            await UserManager.RemovePasswordAsync(user.Id);
+            var result = await UserManager.AddPasswordAsync(user.Id, pwd);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = $"Đã cấp lại mật khẩu mới cho tài khoản '{user.FullName}' (Mật khẩu: {pwd})!";
+            }
+            else
+            {
+                TempData["Error"] = "Không thể cấp lại mật khẩu: " + string.Join(", ", result.Errors);
+            }
+
+            return RedirectToAction("UserEdit", new { id = id });
+        }
+
+        // POST: /Admin/UserDelete (UC11 - Xóa tài khoản)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> UserDelete(string id)
+        {
+            if (id == User.Identity.GetUserId())
+            {
+                TempData["Error"] = "Không thể tự xóa tài khoản quản trị đang đăng nhập.";
+                return RedirectToAction("Users");
+            }
+
+            var user = await UserManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                bool hasTickets = _context.Tickets.Any(t => t.CreatedById == id || t.AssignedToId == id);
+                if (hasTickets)
+                {
+                    user.IsActive = false;
+                    await UserManager.UpdateAsync(user);
+                    TempData["Success"] = $"Tài khoản '{user.FullName}' có dữ liệu phiếu liên quan nên đã được chuyển sang trạng thái Ngừng hoạt động (Xóa mềm).";
+                }
+                else
+                {
+                    await UserManager.DeleteAsync(user);
+                    TempData["Success"] = $"Đã xóa tài khoản '{user.FullName}' thành công.";
+                }
+            }
+
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> UserToggleActive(string id)
+        {
+            if (id == User.Identity.GetUserId())
+            {
+                return Json(new { success = false, message = "Không thể khóa tài khoản đang đăng nhập." });
+            }
+            var user = await UserManager.FindByIdAsync(id);
+            if (user == null) return Json(new { success = false });
+
+            user.IsActive = !user.IsActive;
+            await UserManager.UpdateAsync(user);
+            return Json(new { success = true, isActive = user.IsActive });
+        }
+
         // ============================
-        // DEPARTMENT MANAGEMENT
+        // DEPARTMENT MANAGEMENT (UC12 - 2.5.9)
         // ============================
 
         public ActionResult Departments()
@@ -161,7 +312,7 @@ namespace HelpdeskSystem.Controllers
 
         public ActionResult DepartmentCreate()
         {
-            return View(new Department());
+            return View(new Department { IsActive = true });
         }
 
         [HttpPost]
@@ -206,8 +357,32 @@ namespace HelpdeskSystem.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult DepartmentDelete(int id)
+        {
+            var dept = _unitOfWork.Departments.GetById(id);
+            if (dept != null)
+            {
+                bool inUse = _context.Users.Any(u => u.DepartmentId == id) || _context.Categories.Any(c => c.DepartmentId == id);
+                if (inUse)
+                {
+                    dept.IsActive = false;
+                    _unitOfWork.SaveChanges();
+                    TempData["Success"] = $"Phòng ban '{dept.Name}' đang có nhân sự/danh mục liên kết nên đã chuyển sang Ngừng hoạt động.";
+                }
+                else
+                {
+                    _unitOfWork.Departments.Delete(dept);
+                    _unitOfWork.SaveChanges();
+                    TempData["Success"] = $"Đã xóa phòng ban '{dept.Name}' thành công.";
+                }
+            }
+            return RedirectToAction("Departments");
+        }
+
         // ============================
-        // CATEGORY MANAGEMENT
+        // CATEGORY MANAGEMENT (UC13 - 2.5.8)
         // ============================
 
         public ActionResult Categories()
@@ -224,7 +399,7 @@ namespace HelpdeskSystem.Controllers
             ViewBag.Departments = new SelectList(
                 _unitOfWork.Departments.GetAll().Where(d => d.IsActive).ToList(),
                 "DepartmentId", "Name");
-            return View(new Category());
+            return View(new Category { IsActive = true });
         }
 
         [HttpPost]
@@ -233,9 +408,10 @@ namespace HelpdeskSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                model.IsActive = true;
                 _unitOfWork.Categories.Add(model);
                 _unitOfWork.SaveChanges();
-                TempData["Success"] = "Thêm danh mục thành công!";
+                TempData["Success"] = "Thêm danh mục sự cố thành công!";
                 return RedirectToAction("Categories");
             }
             ViewBag.Departments = new SelectList(
@@ -267,9 +443,10 @@ namespace HelpdeskSystem.Controllers
                 existing.Name = model.Name;
                 existing.Description = model.Description;
                 existing.DepartmentId = model.DepartmentId;
+                existing.IsActive = model.IsActive;
                 _unitOfWork.SaveChanges();
 
-                TempData["Success"] = "Cập nhật danh mục thành công!";
+                TempData["Success"] = "Cập nhật danh mục sự cố thành công!";
                 return RedirectToAction("Categories");
             }
             ViewBag.Departments = new SelectList(
@@ -278,8 +455,32 @@ namespace HelpdeskSystem.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CategoryDelete(int id)
+        {
+            var category = _unitOfWork.Categories.GetById(id);
+            if (category != null)
+            {
+                bool inUse = _context.Tickets.Any(t => t.CategoryId == id) || _context.KnowledgeBaseArticles.Any(a => a.CategoryId == id);
+                if (inUse)
+                {
+                    category.IsActive = false;
+                    _unitOfWork.SaveChanges();
+                    TempData["Success"] = $"Danh mục '{category.Name}' đang được sử dụng trong phiếu/bài viết nên đã được chuyển sang Ngừng sử dụng.";
+                }
+                else
+                {
+                    _unitOfWork.Categories.Delete(category);
+                    _unitOfWork.SaveChanges();
+                    TempData["Success"] = $"Đã xóa danh mục '{category.Name}' thành công.";
+                }
+            }
+            return RedirectToAction("Categories");
+        }
+
         // ============================
-        // SLA CONFIGURATION
+        // SLA & PRIORITY CONFIGURATION (UC14 - 2.6.8)
         // ============================
 
         public ActionResult SLAConfig()
@@ -289,7 +490,7 @@ namespace HelpdeskSystem.Controllers
                 .OrderBy(s => s.Priority.Level)
                 .ToList();
             ViewBag.Priorities = new SelectList(
-                _unitOfWork.Priorities.GetAll().ToList(), "PriorityId", "Name");
+                _unitOfWork.Priorities.GetAll().OrderBy(p => p.Level).ToList(), "PriorityId", "Name");
             return View(configs);
         }
 
@@ -298,9 +499,20 @@ namespace HelpdeskSystem.Controllers
         public ActionResult SLAConfigSave(int? SLAConfigId, int PriorityId,
             int ResponseTimeHours, int ResolutionTimeHours, int WarningThresholdPercent)
         {
+            if (ResponseTimeHours <= 0 || ResolutionTimeHours <= 0)
+            {
+                TempData["Error"] = "Thời hạn phản hồi và thời hạn xử lý phải là số nguyên dương.";
+                return RedirectToAction("SLAConfig");
+            }
+
+            if (ResponseTimeHours > ResolutionTimeHours)
+            {
+                TempData["Error"] = "Thời hạn phản hồi không được lớn hơn thời hạn xử lý.";
+                return RedirectToAction("SLAConfig");
+            }
+
             if (SLAConfigId.HasValue && SLAConfigId.Value > 0)
             {
-                // Update existing
                 var existing = _unitOfWork.SLAConfigs.GetById(SLAConfigId.Value);
                 if (existing != null)
                 {
@@ -308,12 +520,11 @@ namespace HelpdeskSystem.Controllers
                     existing.ResolutionTimeHours = ResolutionTimeHours;
                     existing.WarningThresholdPercent = WarningThresholdPercent;
                     _unitOfWork.SaveChanges();
-                    TempData["Success"] = "Cập nhật cấu hình SLA thành công!";
+                    TempData["Success"] = "Cập nhật thời hạn xử lý thành công!";
                 }
             }
             else
             {
-                // Create new
                 var config = new SLAConfig
                 {
                     PriorityId = PriorityId,
@@ -323,7 +534,7 @@ namespace HelpdeskSystem.Controllers
                 };
                 _unitOfWork.SLAConfigs.Add(config);
                 _unitOfWork.SaveChanges();
-                TempData["Success"] = "Thêm cấu hình SLA thành công!";
+                TempData["Success"] = "Thêm cấu hình thời hạn xử lý thành công!";
             }
 
             return RedirectToAction("SLAConfig");

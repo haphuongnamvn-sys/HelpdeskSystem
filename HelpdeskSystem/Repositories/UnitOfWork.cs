@@ -18,6 +18,9 @@ namespace HelpdeskSystem.Repositories
         private IRepository<SLAConfig> _slaConfigs;
         private IRepository<Notification> _notifications;
         private IRepository<KnowledgeBase> _knowledgeBaseArticles;
+        private IRepository<ArticleRating> _articleRatings;
+        private IRepository<ChatbotSession> _chatbotSessions;
+        private IRepository<ChatbotMessage> _chatbotMessages;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -37,6 +40,9 @@ namespace HelpdeskSystem.Repositories
         public IRepository<SLAConfig> SLAConfigs => _slaConfigs ?? (_slaConfigs = new Repository<SLAConfig>(_context));
         public IRepository<Notification> Notifications => _notifications ?? (_notifications = new Repository<Notification>(_context));
         public IRepository<KnowledgeBase> KnowledgeBaseArticles => _knowledgeBaseArticles ?? (_knowledgeBaseArticles = new Repository<KnowledgeBase>(_context));
+        public IRepository<ArticleRating> ArticleRatings => _articleRatings ?? (_articleRatings = new Repository<ArticleRating>(_context));
+        public IRepository<ChatbotSession> ChatbotSessions => _chatbotSessions ?? (_chatbotSessions = new Repository<ChatbotSession>(_context));
+        public IRepository<ChatbotMessage> ChatbotMessages => _chatbotMessages ?? (_chatbotMessages = new Repository<ChatbotMessage>(_context));
 
         public int SaveChanges()
         {

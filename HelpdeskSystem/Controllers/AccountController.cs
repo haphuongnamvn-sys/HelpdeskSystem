@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
@@ -6,6 +7,7 @@ using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
+using HelpdeskSystem.Helpers;
 using HelpdeskSystem.Models;
 using HelpdeskSystem.Models.ViewModels;
 
@@ -36,9 +38,9 @@ namespace HelpdeskSystem.Controllers
             {
                 return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
-            private set 
-            { 
-                _signInManager = value; 
+            private set
+            {
+                _signInManager = value;
             }
         }
 
@@ -54,7 +56,6 @@ namespace HelpdeskSystem.Controllers
             }
         }
 
-        //
         // GET: /Account/Login
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
@@ -67,7 +68,6 @@ namespace HelpdeskSystem.Controllers
             return View();
         }
 
-        //
         // POST: /Account/Login
         [HttpPost]
         [AllowAnonymous]
@@ -79,9 +79,20 @@ namespace HelpdeskSystem.Controllers
                 return View(model);
             }
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            // Support login by Username or Email
+            string userName = model.Email?.Trim();
+            var userByEmail = _context.Users.FirstOrDefault(u => u.Email == userName || u.UserName == userName);
+            if (userByEmail != null)
+            {
+                if (!userByEmail.IsActive)
+                {
+                    ModelState.AddModelError("", "Tài khoản này đã bị vô hiệu hóa. Vui lòng liên hệ Quản trị viên.");
+                    return View(model);
+                }
+                userName = userByEmail.UserName;
+            }
+
+            var result = await SignInManager.PasswordSignInAsync(userName, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -92,12 +103,11 @@ namespace HelpdeskSystem.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
                 default:
-                    ModelState.AddModelError("", "Email hoặc mật khẩu không đúng.");
+                    ModelState.AddModelError("", "Tài khoản hoặc mật khẩu không đúng.");
                     return View(model);
             }
         }
 
-        //
         // GET: /Account/Register
         [AllowAnonymous]
         public ActionResult Register()
@@ -105,7 +115,6 @@ namespace HelpdeskSystem.Controllers
             return View();
         }
 
-        //
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
@@ -114,41 +123,47 @@ namespace HelpdeskSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email, FullName = model.FullName, PhoneNumber = model.PhoneNumber };
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber
+                };
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    // Assign default role 'EndUser'
                     await UserManager.AddToRoleAsync(user.Id, "EndUser");
-                    
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
-                    // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
-                    // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
-
+                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
                     return RedirectToAction("Index", "Home");
                 }
                 AddErrors(result);
             }
 
-            // If we got this far, something failed, redisplay form
             return View(model);
         }
 
-        //
-        // POST: /Account/LogOff
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET / POST: /Account/LogOff
+        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
         public ActionResult LogOff()
         {
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            Session?.Clear();
+            Session?.Abandon();
+
+            if (Request.Cookies[".AspNet.ApplicationCookie"] != null)
+            {
+                Response.Cookies.Add(new HttpCookie(".AspNet.ApplicationCookie") { Expires = DateTime.Now.AddDays(-1) });
+            }
+            if (Request.Cookies["__RequestVerificationToken"] != null)
+            {
+                Response.Cookies.Add(new HttpCookie("__RequestVerificationToken") { Expires = DateTime.Now.AddDays(-1) });
+            }
+
             return RedirectToAction("Login", "Account");
         }
 
-        // GET: /Account/Profile
+        // GET: /Account/Profile (UC02 - Quản lý tài khoản cá nhân)
         public ActionResult Profile()
         {
             var userId = User.Identity.GetUserId();
@@ -167,8 +182,10 @@ namespace HelpdeskSystem.Controllers
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                Position = user.Position,
                 DepartmentName = department?.Name ?? "N/A",
-                RoleName = roles.FirstOrDefault() ?? "N/A",
+                RoleName = GetRoleVietnameseName(roles.FirstOrDefault()),
                 AvatarUrl = user.AvatarUrl
             };
 
@@ -180,25 +197,45 @@ namespace HelpdeskSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Profile(ProfileViewModel model)
         {
+            var userId = User.Identity.GetUserId();
+            var user = await UserManager.FindByIdAsync(userId);
+            if (user == null) return HttpNotFound();
+
             if (ModelState.IsValid)
             {
-                var userId = User.Identity.GetUserId();
-                var user = await UserManager.FindByIdAsync(userId);
-                
-                if (user != null)
+                user.FullName = model.FullName;
+                user.PhoneNumber = model.PhoneNumber;
+                user.Address = model.Address;
+                user.Position = model.Position;
+                if (!string.IsNullOrWhiteSpace(model.Email))
                 {
-                    user.FullName = model.FullName;
-                    user.PhoneNumber = model.PhoneNumber;
-                    
-                    var result = await UserManager.UpdateAsync(user);
-                    if (result.Succeeded)
-                    {
-                        TempData["SuccessMessage"] = "Cập nhật thông tin thành công.";
-                        return RedirectToAction("Profile");
-                    }
-                    AddErrors(result);
+                    user.Email = model.Email;
                 }
+
+                if (model.AvatarFile != null && model.AvatarFile.ContentLength > 0)
+                {
+                    var ext = Path.GetExtension(model.AvatarFile.FileName)?.ToLower();
+                    if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif")
+                    {
+                        var (_, filePath, _) = FileHelper.SaveFile(model.AvatarFile, "avatars");
+                        user.AvatarUrl = filePath;
+                    }
+                }
+
+                var result = await UserManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                    return RedirectToAction("Profile");
+                }
+                AddErrors(result);
             }
+
+            var roles = UserManager.GetRoles(userId);
+            var department = _context.Departments.Find(user.DepartmentId);
+            model.DepartmentName = department?.Name ?? "N/A";
+            model.RoleName = GetRoleVietnameseName(roles.FirstOrDefault());
+            model.AvatarUrl = user.AvatarUrl;
 
             return View(model);
         }
@@ -226,11 +263,23 @@ namespace HelpdeskSystem.Controllers
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
                 }
-                TempData["SuccessMessage"] = "Đổi mật khẩu thành công.";
-                return RedirectToAction("Index", "Home");
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
+                return RedirectToAction("Profile", "Account");
             }
             AddErrors(result);
             return View(model);
+        }
+
+        private string GetRoleVietnameseName(string role)
+        {
+            switch (role)
+            {
+                case "Admin": return "Quản trị viên";
+                case "Manager": return "Quản lý";
+                case "Technician": return "Nhân viên phụ trách";
+                case "EndUser": return "Người dùng";
+                default: return role ?? "N/A";
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -242,7 +291,6 @@ namespace HelpdeskSystem.Controllers
                     _userManager.Dispose();
                     _userManager = null;
                 }
-
                 if (_signInManager != null)
                 {
                     _signInManager.Dispose();
@@ -254,14 +302,10 @@ namespace HelpdeskSystem.Controllers
                     _context = null;
                 }
             }
-
             base.Dispose(disposing);
         }
 
         #region Helpers
-        // Used for XSRF protection when adding external logins
-        private const string XsrfKey = "XsrfId";
-
         private IAuthenticationManager AuthenticationManager
         {
             get

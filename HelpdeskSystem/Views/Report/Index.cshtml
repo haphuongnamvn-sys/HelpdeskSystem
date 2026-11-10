@@ -4,169 +4,184 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Styles {
-    <style>
-        #staffTable thead th {
-            text-align: center !important;
-            white-space: nowrap !important;
-            font-size: 0.82rem !important;
-            font-weight: 700 !important;
-            color: #475569 !important;
-            background-color: #f8fafc !important;
-            border-bottom: 2px solid #e2e8f0 !important;
-            padding: 12px 14px !important;
-        }
-        #staffTable tbody td {
-            white-space: normal !important;
-            word-break: break-word !important;
-            vertical-align: middle !important;
-            padding: 12px 14px !important;
-        }
-        #staffTable tbody tr:hover {
-            background-color: #f8faff !important;
-        }
-    </style>
-}
+<div class="container-fluid py-3 px-4">
+    <!-- Breadcrumb & Tiêu đề -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h4 fw-bold text-dark mb-1">Báo cáo &amp; Thống kê hiệu suất</h1>
+            <p class="text-muted small mb-0">Theo dõi khối lượng yêu cầu, tiến độ xử lý và tỷ lệ tuân thủ cam kết SLA.</p>
+        </div>
+    </div>
 
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="m-0 fw-bold text-dark">Bộ lọc báo cáo</h6>
-            </div>
-            <div class="card-body">
-                @using (Html.BeginForm("Index", "Report", FormMethod.Get, new { @class = "row g-3 align-items-end" }))
-                {
-                    <div class="col-md-3">
-                        @Html.LabelFor(m => m.FromDate, new { @class = "form-label" })
-                        @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
-                    </div>
-                    <div class="col-md-3">
-                        @Html.LabelFor(m => m.ToDate, new { @class = "form-label" })
-                        @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
-                    </div>
-                    <div class="col-md-2">
-                        @Html.LabelFor(m => m.CategoryId, new { @class = "form-label" })
-                        @Html.DropDownListFor(m => m.CategoryId, Model.Categories, "Tất cả danh mục", new { @class = "form-select" })
-                    </div>
-                    <div class="col-md-2">
-                        @Html.LabelFor(m => m.PriorityId, new { @class = "form-label" })
-                        @Html.DropDownListFor(m => m.PriorityId, Model.Priorities, "Tất cả mức ưu tiên", new { @class = "form-select" })
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100 mb-2"><i class="fas fa-filter"></i> Lọc</button>
-                        <a href="@Url.Action("ExportExcel", "Report", new { fromDate = Model.FromDate.ToString("yyyy-MM-dd"), toDate = Model.ToDate.ToString("yyyy-MM-dd"), categoryId = Model.CategoryId, priorityId = Model.PriorityId })" class="btn btn-success w-100"><i class="fas fa-file-excel"></i> Xuất Excel</a>
-                    </div>
-                }
-            </div>
+    <!-- Bộ lọc báo cáo & Xuất Excel -->
+    <div class="card mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-semibold text-dark">Bộ lọc báo cáo</span>
+            <span class="text-muted small">Thời gian và điều kiện thống kê</span>
         </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-lg-3 col-6 mb-3">
-        <div class="card bg-primary text-white h-100 p-3">
-            <div class="card-body text-center">
-                <h3 class="display-4 font-weight-bold">@Model.TotalTickets</h3>
-                <p class="mb-0 fs-5">Tổng số phiếu</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6 mb-3">
-        <div class="card bg-success text-white h-100 p-3">
-            <div class="card-body text-center">
-                <h3 class="display-4 font-weight-bold">@Model.ResolvedTickets</h3>
-                <p class="mb-0 fs-5">Đã giải quyết</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6 mb-3">
-        <div class="card bg-danger text-white h-100 p-3">
-            <div class="card-body text-center">
-                <h3 class="display-4 font-weight-bold">@Model.OverdueTickets</h3>
-                <p class="mb-0 fs-5">Quá hạn SLA</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6 mb-3">
-        <div class="card bg-info text-white h-100 p-3">
-            <div class="card-body text-center">
-                <h3 class="display-4 font-weight-bold">@Model.SLAComplianceRate<sup style="font-size: 20px">%</sup></h3>
-                <p class="mb-0 fs-5">Tỷ lệ đúng hạn</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <h3 class="card-title mb-0">Phiếu theo trạng thái</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="statusChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <h3 class="card-title mb-0">Phiếu theo danh mục</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="categoryChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <h3 class="card-title mb-0">Phiếu theo mức ưu tiên</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="priorityChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <h3 class="card-title mb-0">Thời gian xử lý trung bình theo danh mục (Giờ)</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="processingTimeChart" style="min-height: 250px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-primary-soft text-primary p-2 rounded-circle"><i class="fas fa-user-check"></i></span>
-                    <h6 class="m-0 fw-bold text-dark">Hiệu suất nhân viên kỹ thuật</h6>
+        <div class="card-body p-3">
+            @using (Html.BeginForm("Index", "Report", FormMethod.Get, new { @class = "row g-2 align-items-end" }))
+            {
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-dark mb-1">Từ ngày</label>
+                    @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { @class = "form-control form-control-sm", type = "date" })
                 </div>
-                <div>
-                    <span class="badge bg-light text-dark border px-2 py-1">
-                        <i class="far fa-clock me-1 text-primary"></i>Thời gian xử lý TB toàn hệ thống: <strong>@Math.Round(Model.AvgResolutionTimeHours, 1) giờ</strong>
-                    </span>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-dark mb-1">Đến ngày</label>
+                    @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { @class = "form-control form-control-sm", type = "date" })
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-dark mb-1">Danh mục</label>
+                    @Html.DropDownListFor(m => m.CategoryId, Model.Categories, "-- Tất cả danh mục --", new { @class = "form-select form-select-sm" })
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-dark mb-1">Mức ưu tiên</label>
+                    @Html.DropDownListFor(m => m.PriorityId, Model.Priorities, "-- Tất cả ưu tiên --", new { @class = "form-select form-select-sm" })
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="fas fa-filter me-1"></i> Lọc
+                    </button>
+                    <a href="@Url.Action("ExportExcel", "Report", new { fromDate = Model.FromDate.ToString("yyyy-MM-dd"), toDate = Model.ToDate.ToString("yyyy-MM-dd"), categoryId = Model.CategoryId, priorityId = Model.PriorityId })" class="btn btn-outline-success btn-sm flex-fill" title="Tải file Excel">
+                        <i class="fas fa-file-excel me-1"></i> Excel
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 4 Chỉ số KPI thống kê (Phẳng, 1px viền) -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card h-100 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Tổng số phiếu</div>
+                        <div class="stat-value">@Model.TotalTickets</div>
+                    </div>
+                    <div class="stat-icon bg-light text-primary border">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card h-100 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Đã giải quyết</div>
+                        <div class="stat-value text-success">@Model.ResolvedTickets</div>
+                    </div>
+                    <div class="stat-icon bg-light text-success border">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card h-100 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Quá hạn SLA</div>
+                        <div class="stat-value text-danger">@Model.OverdueTickets</div>
+                    </div>
+                    <div class="stat-icon bg-light text-danger border">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card h-100 bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Tỷ lệ đúng hạn SLA</div>
+                        <div class="stat-value text-primary">@Model.SLAComplianceRate<span style="font-size: 16px;">%</span></div>
+                    </div>
+                    <div class="stat-icon bg-light text-primary border">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ phân tích (4 biểu đồ 2 hàng) -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-semibold text-dark">Phân bố phiếu theo trạng thái</span>
+                </div>
+                <div class="card-body p-4 d-flex justify-content-center align-items-center">
+                    <div style="max-height: 250px; width: 100%;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-semibold text-dark">Số lượng phiếu theo danh mục</span>
+                </div>
+                <div class="card-body p-4">
+                    <div style="max-height: 250px; width: 100%;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-semibold text-dark">Phân bố phiếu theo mức ưu tiên</span>
+                </div>
+                <div class="card-body p-4 d-flex justify-content-center align-items-center">
+                    <div style="max-height: 250px; width: 100%;">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-semibold text-dark">Thời gian xử lý trung bình theo danh mục (giờ)</span>
+                </div>
+                <div class="card-body p-4">
+                    <div style="max-height: 250px; width: 100%;">
+                        <canvas id="processingTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng hiệu suất nhân viên kỹ thuật -->
+    <div class="card mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <span class="fw-semibold text-dark">Hiệu suất nhân viên kỹ thuật</span>
+                <span class="text-muted small ms-2">Đo lường KPI và đánh giá chất lượng</span>
+            </div>
+            <span class="badge bg-light text-dark border">
+                Thời gian xử lý TB toàn hệ thống: <strong>@Math.Round(Model.AvgResolutionTimeHours, 1) giờ</strong>
+            </span>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="staffTable">
                     <thead>
                         <tr>
-                            <th class="text-center text-nowrap" style="width: 25%;">NHÂN VIÊN KỸ THUẬT</th>
-                            <th class="text-center text-nowrap" style="width: 20%;">PHIẾU XỬ LÝ</th>
-                            <th class="text-center text-nowrap" style="width: 18%;">TG XỬ LÝ TRUNG BÌNH</th>
-                            <th class="text-center text-nowrap" style="width: 18%;">ĐÁNH GIÁ TRUNG BÌNH</th>
-                            <th class="text-center text-nowrap" style="width: 19%;">TỶ LỆ ĐÚNG HẠN SLA</th>
+                            <th style="width: 25%;">Nhân viên kỹ thuật</th>
+                            <th style="width: 20%;" class="text-center">Số phiếu xử lý</th>
+                            <th style="width: 20%;" class="text-center">Thời gian TB (giờ)</th>
+                            <th style="width: 18%;" class="text-center">Đánh giá sao</th>
+                            <th style="width: 17%;" class="text-center">Tỷ lệ đúng hạn</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -175,70 +190,38 @@
                             foreach (var item in Model.StaffPerformance)
                             {
                                 <tr>
-                                    <!-- Cột 1: Nhân viên -->
-                                    <td class="px-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle bg-primary-soft text-primary d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 34px; height: 34px; font-size: 0.85rem;">
-                                                @(string.IsNullOrEmpty(item.TechnicianName) ? "T" : item.TechnicianName.Substring(0, 1).ToUpper())
-                                            </div>
-                                            <div class="fw-semibold text-dark">@item.TechnicianName</div>
-                                        </div>
+                                    <td>
+                                        <div class="fw-semibold text-dark">@item.TechnicianName</div>
                                     </td>
-
-                                    <!-- Cột 2: Phiếu xử lý (Mỗi mục 1 dòng) -->
                                     <td class="text-center">
-                                        <div class="mb-1">
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                                Đã xử lý: <strong>@item.TotalResolved</strong>
-                                            </span>
-                                        </div>
-                                        <div class="text-muted small" style="font-size: 0.76rem;">
-                                            Tổng giao: @item.TotalAssigned
-                                        </div>
+                                        <span class="badge bg-light text-success border px-2 py-1 small">
+                                            Đã xử lý: @item.TotalResolved
+                                        </span>
+                                        <span class="text-muted small ms-1">(Tổng giao: @item.TotalAssigned)</span>
                                     </td>
-
-                                    <!-- Cột 3: TG xử lý TB -->
                                     <td class="text-center">
-                                        <span class="fw-semibold text-dark">@item.AvgResolutionHours</span> <span class="text-muted small">giờ</span>
+                                        <span class="fw-semibold text-dark">@item.AvgResolutionHours</span>
                                     </td>
-
-                                    <!-- Cột 4: Đánh giá TB -->
                                     <td class="text-center">
-                                        <div class="text-warning small mb-1">
+                                        <div class="text-warning small">
                                             @for (int i = 1; i <= 5; i++)
                                             {
                                                 if (i <= Math.Round(item.AvgRating))
                                                 {
                                                     <i class="fas fa-star"></i>
                                                 }
-                                                else if (i - 0.5 <= item.AvgRating)
-                                                {
-                                                    <i class="fas fa-star-half-alt"></i>
-                                                }
                                                 else
                                                 {
-                                                    <i class="far fa-star text-muted opacity-50"></i>
+                                                    <i class="far fa-star text-muted"></i>
                                                 }
                                             }
                                         </div>
-                                        <div class="text-muted small" style="font-size: 0.78rem;">
-                                            @item.AvgRating / 5
-                                        </div>
+                                        <div class="text-muted small" style="font-size: 11px;">@item.AvgRating / 5</div>
                                     </td>
-
-                                    <!-- Cột 5: Tỷ lệ đúng hạn SLA -->
-                                    <td class="text-center px-3">
-                                        <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px; max-width: 90px;">
-                                                <div class="progress-bar @(item.SLAComplianceRate >= 80 ? "bg-success" : (item.SLAComplianceRate >= 50 ? "bg-warning" : "bg-danger"))" 
-                                                     role="progressbar" 
-                                                     style="width: @item.SLAComplianceRate%" 
-                                                     aria-valuenow="@item.SLAComplianceRate" 
-                                                     aria-valuemin="0" 
-                                                     aria-valuemax="100"></div>
-                                            </div>
-                                            <span class="fw-bold small @(item.SLAComplianceRate >= 80 ? "text-success" : (item.SLAComplianceRate >= 50 ? "text-warning" : "text-danger"))">@item.SLAComplianceRate%</span>
-                                        </div>
+                                    <td class="text-center">
+                                        <span class="badge @(item.SLAComplianceRate >= 80 ? "bg-success-subtle text-success border border-success-subtle" : "bg-warning-subtle text-warning border border-warning-subtle") px-2 py-1 small">
+                                            @item.SLAComplianceRate%
+                                        </span>
                                     </td>
                                 </tr>
                             }
@@ -246,9 +229,8 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
-                                    <i class="fas fa-user-clock fa-3x mb-3 d-block opacity-25"></i>
-                                    <span class="fw-semibold">Chưa có dữ liệu hiệu suất trong khoảng thời gian này</span>
+                                <td colspan="5" class="text-center py-4 text-muted small">
+                                    Chưa có dữ liệu hiệu suất trong khoảng thời gian này.
                                 </td>
                             </tr>
                         }
@@ -263,83 +245,111 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Data for Status Chart (Pie)
             var statusLabels = @Html.Raw(Json.Encode(Model.TicketsByStatus.Keys));
             var statusValues = @Html.Raw(Json.Encode(Model.TicketsByStatus.Values));
-            var statusCtx = document.getElementById('statusChart').getContext('2d');
-            new Chart(statusCtx, {
-                type: 'pie',
-                data: {
-                    labels: statusLabels,
-                    datasets: [{
-                        data: statusValues,
-                        backgroundColor: ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#6c757d', '#212529']
-                    }]
-                },
-                options: { maintainAspectRatio: false, responsive: true }
-            });
+            var statusCtx = document.getElementById('statusChart');
+            if (statusCtx) {
+                new Chart(statusCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusValues,
+                            backgroundColor: ['#3B82F6', '#16A34A', '#DC2626', '#F59E0B', '#8B5CF6', '#98A2B3'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: { 
+                        maintainAspectRatio: false, 
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Be Vietnam Pro', size: 12 } } }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
 
-            // Data for Category Chart (Bar)
             var categoryLabels = @Html.Raw(Json.Encode(Model.TicketsByCategory.Keys));
             var categoryValues = @Html.Raw(Json.Encode(Model.TicketsByCategory.Values));
-            var categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            new Chart(categoryCtx, {
-                type: 'bar',
-                data: {
-                    labels: categoryLabels,
-                    datasets: [{
-                        label: 'Số lượng phiếu',
-                        data: categoryValues,
-                        backgroundColor: '#0d6efd'
-                    }]
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    responsive: true,
-                    scales: { 
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } } 
-                    } 
-                }
-            });
+            var categoryCtx = document.getElementById('categoryChart');
+            if (categoryCtx) {
+                new Chart(categoryCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: categoryLabels,
+                        datasets: [{
+                            label: 'Số lượng phiếu',
+                            data: categoryValues,
+                            backgroundColor: '#1F5FBF',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { 
+                        maintainAspectRatio: false, 
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Be Vietnam Pro', size: 12 } }, grid: { color: '#EEF2F6' } },
+                            x: { ticks: { font: { family: 'Be Vietnam Pro', size: 12 } }, grid: { display: false } }
+                        } 
+                    }
+                });
+            }
 
-            // Data for Priority Chart (Doughnut)
             var priorityLabels = @Html.Raw(Json.Encode(Model.TicketsByPriority.Keys));
             var priorityValues = @Html.Raw(Json.Encode(Model.TicketsByPriority.Values));
-            var priorityCtx = document.getElementById('priorityChart').getContext('2d');
-            new Chart(priorityCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: priorityLabels,
-                    datasets: [{
-                        data: priorityValues,
-                        backgroundColor: ['#dc3545', '#ffc107', '#198754', '#0dcaf0']
-                    }]
-                },
-                options: { maintainAspectRatio: false, responsive: true }
-            });
+            var priorityCtx = document.getElementById('priorityChart');
+            if (priorityCtx) {
+                new Chart(priorityCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: priorityLabels,
+                        datasets: [{
+                            data: priorityValues,
+                            backgroundColor: ['#DC2626', '#F59E0B', '#3B82F6', '#16A34A'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: { 
+                        maintainAspectRatio: false, 
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Be Vietnam Pro', size: 12 } } }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
 
-            // Data for Processing Time Chart (Bar)
             var timeLabels = @Html.Raw(Json.Encode(Model.ProcessingTimeByCategory.Keys));
             var timeValues = @Html.Raw(Json.Encode(Model.ProcessingTimeByCategory.Values));
-            var timeCtx = document.getElementById('processingTimeChart').getContext('2d');
-            new Chart(timeCtx, {
-                type: 'bar',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: 'Thời gian xử lý (giờ)',
-                        data: timeValues,
-                        backgroundColor: '#0dcaf0'
-                    }]
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    responsive: true,
-                    scales: { 
-                        y: { beginAtZero: true } 
-                    } 
-                }
-            });
+            var timeCtx = document.getElementById('processingTimeChart');
+            if (timeCtx) {
+                new Chart(timeCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: timeLabels,
+                        datasets: [{
+                            label: 'Thời gian xử lý (giờ)',
+                            data: timeValues,
+                            backgroundColor: '#0EA5E9',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { 
+                        maintainAspectRatio: false, 
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { font: { family: 'Be Vietnam Pro', size: 12 } }, grid: { color: '#EEF2F6' } },
+                            x: { ticks: { font: { family: 'Be Vietnam Pro', size: 12 } }, grid: { display: false } }
+                        } 
+                    }
+                });
+            }
         });
     </script>
 }

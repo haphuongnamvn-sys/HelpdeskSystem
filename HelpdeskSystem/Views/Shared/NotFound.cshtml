@@ -3,21 +3,28 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container text-center py-5">
+<div class="container-fluid py-5 px-4">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-warning p-4">
-                <i class="fas fa-compass fa-4x text-warning mb-3"></i>
-                <h1 class="display-3 fw-bold text-dark">404</h1>
-                <h4 class="fw-bold">Không tìm thấy trang yêu cầu</h4>
-                <p class="text-muted mt-2">
-                    Trang bạn đang cố gắng truy cập không tồn tại, đã bị xóa hoặc đường dẫn bị sai.
+        <div class="col-lg-6 col-md-8">
+            <div class="card border bg-white text-center p-5" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+                <div class="mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-light text-secondary rounded-circle" style="width: 64px; height: 64px; border: 1px solid #D9DEE5;">
+                        <i class="fas fa-search fa-2x"></i>
+                    </span>
+                </div>
+                
+                <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.08em;">Lỗi 404</div>
+                <h1 class="h4 fw-bold text-dark mt-1 mb-2">Không tìm thấy trang yêu cầu</h1>
+                
+                <p class="text-muted small mb-4 mx-auto" style="max-width: 440px; line-height: 1.6;">
+                    Đường dẫn bạn đang truy cập không tồn tại hoặc đã được chuyển sang địa chỉ mới. Vui lòng kiểm tra lại địa chỉ URL hoặc quay về trang chủ.
                 </p>
-                <div class="mt-4">
-                    <a href="~/" class="btn btn-primary me-2">
-                        <i class="fas fa-home me-1"></i> Trang chủ
+
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <a href="~/" class="btn btn-primary px-4 fw-medium">
+                        <i class="fas fa-home me-1"></i> Quay về trang làm việc
                     </a>
-                    <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-primary">
+                    <a href="@Url.Action("Index", "Ticket")" class="btn btn-outline-secondary px-3">
                         <i class="fas fa-ticket-alt me-1"></i> Danh sách phiếu
                     </a>
                 </div>

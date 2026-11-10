@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Web;
 
 namespace HelpdeskSystem.Models.ViewModels
 {
@@ -19,6 +20,14 @@ namespace HelpdeskSystem.Models.ViewModels
         [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; }
 
+        [StringLength(300)]
+        [Display(Name = "Địa chỉ")]
+        public string Address { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Chức vụ")]
+        public string Position { get; set; }
+
         [Display(Name = "Phòng ban")]
         public string DepartmentName { get; set; }
 
@@ -26,6 +35,9 @@ namespace HelpdeskSystem.Models.ViewModels
         public string RoleName { get; set; }
 
         public string AvatarUrl { get; set; }
+
+        [Display(Name = "Ảnh đại diện mới")]
+        public HttpPostedFileBase AvatarFile { get; set; }
     }
 
     public class ChangePasswordViewModel

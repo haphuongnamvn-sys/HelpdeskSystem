@@ -17,6 +17,9 @@ namespace HelpdeskSystem.Repositories
         IRepository<SLAConfig> SLAConfigs { get; }
         IRepository<Notification> Notifications { get; }
         IRepository<KnowledgeBase> KnowledgeBaseArticles { get; }
+        IRepository<ArticleRating> ArticleRatings { get; }
+        IRepository<ChatbotSession> ChatbotSessions { get; }
+        IRepository<ChatbotMessage> ChatbotMessages { get; }
         ApplicationDbContext Context { get; }
         int SaveChanges();
     }

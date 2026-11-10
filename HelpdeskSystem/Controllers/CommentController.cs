@@ -1,3 +1,4 @@
+﻿using HelpdeskSystem.Filters;
 using System;
 using System.Linq;
 using System.Web;
@@ -11,7 +12,7 @@ using Microsoft.AspNet.Identity;
 
 namespace HelpdeskSystem.Controllers
 {
-    [Authorize]
+    [AuthorizeRoles("EndUser", "Manager", "Technician")]
     public class CommentController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -25,6 +26,7 @@ namespace HelpdeskSystem.Controllers
         }
 
         // POST: /Comment/Add
+        [AuthorizeRoles("EndUser", "Technician")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Add(int ticketId, string content, bool isInternalNote = false, HttpPostedFileBase[] attachments = null, string returnUrl = null)

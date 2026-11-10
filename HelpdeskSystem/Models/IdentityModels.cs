@@ -20,6 +20,14 @@ namespace HelpdeskSystem.Models
         [StringLength(500)]
         public string AvatarUrl { get; set; }
 
+        [StringLength(300)]
+        [Display(Name = "Địa chỉ")]
+        public string Address { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Chức vụ")]
+        public string Position { get; set; }
+
         [Display(Name = "Phòng ban")]
         public int? DepartmentId { get; set; }
 
@@ -68,6 +76,9 @@ namespace HelpdeskSystem.Models
         public DbSet<SLAConfig> SLAConfigs { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<KnowledgeBase> KnowledgeBaseArticles { get; set; }
+        public DbSet<ArticleRating> ArticleRatings { get; set; }
+        public DbSet<ChatbotSession> ChatbotSessions { get; set; }
+        public DbSet<ChatbotMessage> ChatbotMessages { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -199,6 +210,30 @@ namespace HelpdeskSystem.Models
                 .WithMany()
                 .HasForeignKey(k => k.CreatedById)
                 .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<ArticleRating>()
+                .HasRequired(ar => ar.Article)
+                .WithMany(k => k.Ratings)
+                .HasForeignKey(ar => ar.ArticleId)
+                .WillCascadeOnDelete(true);
+
+            modelBuilder.Entity<ArticleRating>()
+                .HasRequired(ar => ar.User)
+                .WithMany()
+                .HasForeignKey(ar => ar.UserId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<ChatbotSession>()
+                .HasRequired(cs => cs.User)
+                .WithMany()
+                .HasForeignKey(cs => cs.UserId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<ChatbotMessage>()
+                .HasRequired(cm => cm.Session)
+                .WithMany(cs => cs.Messages)
+                .HasForeignKey(cm => cm.ChatbotSessionId)
+                .WillCascadeOnDelete(true);
 
             // ApplicationUser → Department
             modelBuilder.Entity<ApplicationUser>()

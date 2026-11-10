@@ -1,58 +1,56 @@
 @using Microsoft.AspNet.Identity
 @if (Request.IsAuthenticated)
 {
-    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "d-none" }))
-    {
-        @Html.AntiForgeryToken()
-    }
-
-    <!-- Chuông thông báo Realtime -->
+    @* Chuông thông báo Realtime: hiển thị cho tất cả người dùng đăng nhập theo Biểu đồ Use Case (UC10) *@
     <li class="nav-item dropdown me-2">
         <a class="nav-link position-relative p-2" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo hệ thống">
             <i class="far fa-bell fa-lg text-secondary"></i>
             <span class="badge bg-danger rounded-pill navbar-badge" id="notificationCount" style="display:none;">0</span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-0" aria-labelledby="notificationDropdown" id="notificationList" style="min-width: 320px;">
-            <li class="p-3 bg-light border-bottom fw-bold text-dark">
+        <ul class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="notificationDropdown" id="notificationList" style="min-width: 320px; border-color: #D9DEE5 !important; border-radius: 6px;">
+            <li class="p-3 bg-light border-bottom fw-bold text-dark small" style="border-color: #D9DEE5 !important;">
                 <i class="fas fa-bell me-1 text-primary"></i> Thông báo mới
             </li>
-            <li><span class="dropdown-item py-3 text-center text-muted small">Đang kiểm tra...</span></li>
-            <li class="border-top text-center p-2">
-                <small class="text-muted">Tự động cập nhật mỗi 30 giây</small>
+            <li><span class="dropdown-item py-3 text-center text-muted small">Đang kiểm tra thông báo...</span></li>
+            <li class="border-top text-center p-2 bg-light" style="border-color: #D9DEE5 !important;">
+                <a href="@Url.Action("Index", "Notification")" class="text-primary small text-decoration-none fw-semibold">
+                    <i class="fas fa-list-ul me-1"></i> Xem tất cả thông báo
+                </a>
             </li>
         </ul>
     </li>
 
     <!-- User Profile Dropdown -->
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle d-flex align-items-center p-1 px-2 border rounded-pill bg-light" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="https://ui-avatars.com/api/?name=@(User.Identity.GetUserName())&background=2563eb&color=fff&size=64" class="rounded-circle me-2" width="28" height="28" alt="Avatar">
-            <span class="fw-semibold text-dark me-1" style="font-size: 0.9rem;">
+        <a class="nav-link dropdown-toggle d-flex align-items-center p-1 px-2 border bg-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: #D9DEE5 !important; border-radius: 6px;">
+            <img src="https://ui-avatars.com/api/?name=@(User.Identity.GetUserName())&background=1F5FBF&color=fff&size=64" class="rounded-circle me-2" width="24" height="24" alt="Avatar">
+            <span class="fw-medium text-dark me-1" style="font-size: 0.88rem;">
                 @(User.Identity.GetUserName())
             </span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2 py-2" aria-labelledby="userDropdown" style="min-width: 240px; border-radius: 10px;">
-            <li class="px-3 py-2 border-bottom mb-1">
-                <div class="fw-bold text-dark text-truncate">@(User.Identity.GetUserName())</div>
-                <small class="text-muted">
+        <ul class="dropdown-menu dropdown-menu-end border mt-1 py-1" aria-labelledby="userDropdown" style="min-width: 240px; border-color: #D9DEE5 !important; border-radius: 6px;">
+            <li class="px-3 py-2 border-bottom mb-1" style="border-color: #D9DEE5 !important;">
+                <div class="fw-semibold text-dark text-truncate" style="font-size: 0.88rem;">@(User.Identity.GetUserName())</div>
+                <div class="mt-1">
                     @if (User.IsInRole("Admin")) { <span class="badge bg-danger">Quản trị viên</span> }
+                    else if (User.IsInRole("Manager")) { <span class="badge bg-primary">Quản lý</span> }
                     else if (User.IsInRole("Technician")) { <span class="badge bg-warning text-dark">Kỹ thuật viên</span> }
-                    else { <span class="badge bg-info">Người dùng</span> }
-                </small>
+                    else { <span class="badge bg-info text-dark">Người dùng</span> }
+                </div>
             </li>
             <li>
-                <a class="dropdown-item py-2" href="@Url.Action("Profile", "Account")">
+                <a class="dropdown-item py-2 small text-dark" href="@Url.Action("Profile", "Account")">
                     <i class="fas fa-user-circle fa-fw text-primary me-2"></i> Hồ sơ cá nhân
                 </a>
             </li>
             <li>
-                <a class="dropdown-item py-2" href="@Url.Action("ChangePassword", "Account")">
+                <a class="dropdown-item py-2 small text-dark" href="@Url.Action("ChangePassword", "Account")">
                     <i class="fas fa-key fa-fw text-secondary me-2"></i> Đổi mật khẩu
                 </a>
             </li>
-            <li><hr class="dropdown-divider my-1"></li>
+            <li><hr class="dropdown-divider my-1" style="border-color: #D9DEE5 !important;"></li>
             <li>
-                <a class="dropdown-item py-2 text-danger fw-bold" href="javascript:void(0);" onclick="if(confirm('Bạn có chắc chắn muốn đăng xuất không?')) { document.getElementById('logoutForm').submit(); }">
+                <a class="dropdown-item py-2 small text-danger fw-semibold" href="@Url.Action("LogOff", "Account")" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất không?');">
                     <i class="fas fa-sign-out-alt fa-fw me-2"></i> Đăng xuất
                 </a>
             </li>
@@ -62,7 +60,7 @@
 else
 {
     <li class="nav-item me-2">
-        <a href="@Url.Action("Register", "Account")" class="btn btn-outline-primary btn-sm px-3">
+        <a href="@Url.Action("Register", "Account")" class="btn btn-outline-secondary btn-sm px-3">
             <i class="fas fa-user-plus me-1"></i> Đăng ký
         </a>
     </li>
